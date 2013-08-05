@@ -5,19 +5,21 @@ DragonflyWM is a nimble, fast and modern tiling window manager for X, based on D
 It has some EWMH compliancy: third party panels such as tint2 are supported (albeit rudimentary), as are simple window switchers.
 Pager support (virtual desktops) is partly there; the tag system of DWM is at fault here. See [this patch][url] for an explanation.
 
+  [url]: http://dwm.suckless.org/patches/current_desktop
+
 More EWMH support, such as real desktops (with names), minimizing of clients and struts are on the TODO list. Feel free to help out!
 
 DragonflyWM is, as said, based on DWM. Everything draw and font related has been removed. Some patches are included:
 
-*pertag2;
-*useless gaps;
-*bottom stack layout;
-*chat layout;
-*xkeycodetokeysim fix;
-*attachaside;
-*urgentborder;
-*push;
-*netwmdemandsattention.
+* pertag2;
+* useless gaps;
+* bottom stack layout;
+* chat layout;
+* xkeycodetokeysim fix;
+* attachaside;
+* urgentborder;
+* push;
+* netwmdemandsattention.
 
 All credit for these go to their original authors. For more licensing, see LICENSE.
 
@@ -40,4 +42,6 @@ For any bug or request [fill an issue][bug] on [GitHub][ghp].
 
 License
 -------
-See LICENSE for licensing information.
+See [LICENSE][file] for licensing information.
+
+  [file]: https://github.com/Unia/dragonfly/blob/master/LICENSE

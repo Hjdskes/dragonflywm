@@ -473,10 +473,10 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
 		if(*y + *h + 2 * c->bw <= m->wy)
 			*y = m->wy;
 	}
-	if(*h < bh)
-		*h = bh;
-	if(*w < bh)
-		*w = bh;
+	if(*h < barheight)
+		*h = barheight;
+	if(*w < barheight)
+		*w = barheight;
 	if(resizehints || c->isfloating || !c->mon->lt[c->mon->sellt]->arrange) {
 		/* see last two sentences in ICCCM 4.1.2.3 */
 		baseismin = c->basew == c->minw && c->baseh == c->minh;
@@ -1202,7 +1202,7 @@ manage(Window w, XWindowAttributes *wa) {
 	c->x = MAX(c->x, c->mon->mx);
 	/* only fix client y-offset, if the client center might cover the bar */
 	c->y = MAX(c->y, ((c->mon->by == c->mon->my) && (c->x + (c->w / 2) >= c->mon->wx)
-	           && (c->x + (c->w / 2) < c->mon->wx + c->mon->ww)) ? bh : c->mon->my);
+	           && (c->x + (c->w / 2) < c->mon->wx + c->mon->ww)) ? barheight : c->mon->my);
 	c->bw = borderpx;
 
 	wc.border_width = c->bw;
@@ -1853,12 +1853,12 @@ updatebarpos(Monitor *m) {
 	m->wy = m->my;
 	m->wh = m->mh;
 	if(m->showbar) {
-		m->wh -= bh;
+		m->wh -= barheight;
 		m->by = m->topbar ? m->wy : m->wy + m->wh;
-		m->wy = m->topbar ? m->wy + bh : m->wy;
+		m->wy = m->topbar ? m->wy + barheight : m->wy;
 	}
 	else
-		m->by = -bh;
+		m->by = -barheight;
 }
 
 Bool
