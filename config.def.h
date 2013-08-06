@@ -2,6 +2,7 @@
 #include <X11/XF86keysym.h>
 
 #define MODKEY Mod1Mask
+#define MONKEY Mod4Mask
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 #define TAGKEYS(KEY,TAG) \
 	{ MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
