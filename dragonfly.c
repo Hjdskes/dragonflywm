@@ -61,10 +61,12 @@ enum { ColBorder, ColLast };                                               /* co
 enum { NetActiveWindow, NetClientList, NetClientListStacking,
        NetCurrentDesktop, NetNumberOfDesktops, NetSupported,
        NetSupportingCheck, NetWMDesktop, NetWMName, NetWMState,
-       NetWMFullscreen, NetWMWindowType, NetWMWindowTypeNotification,
-       NetWMWindowTypeSplash, NetWMWindowTypeDock, NetWMWindowTypeDialog,
+       NetWMStateHidden, NetWMFullscreen, NetWMWindowType,
+       NetWMWindowTypeNotification, NetWMWindowTypeSplash,
+       NetWMWindowTypeDock, NetWMWindowTypeDialog,
        NetWMDemandsAttention, NetLast };                                   /* EWMH atoms */
-enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast, Utf8String };  /* default atoms */
+enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast,
+       Utf8String };                                                       /* default atoms */
 enum { ClkClientWin, ClkRootWin, ClkLast };                                /* clicks */
 
 typedef union {
@@ -181,7 +183,6 @@ static void detachstack(Client *c);
 static void die(const char *errstr, ...);
 static Monitor *dirtomon(int dir);
 static void enternotify(XEvent *e);
-/*static void expose(XEvent *e);*/
 static void focus(Client *c);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
@@ -273,7 +274,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[ConfigureNotify] = configurenotify,
 	[DestroyNotify] = destroynotify,
 	[EnterNotify] = enternotify,
-	/*[Expose] = expose,*/
 	[FocusIn] = focusin,
 	[KeyPress] = keypress,
 	[MappingNotify] = mappingnotify,
@@ -319,6 +319,7 @@ ewmh_init(void) {
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	/* STATES */
 	netatom[NetWMState] = XInternAtom(dpy, "_NET_WM_STATE", False);
+	netatom[NetWMStateHidden] = XInternAtom(dpy, "_NET_WM_STATE_HIDDEN", False);
 	netatom[NetWMFullscreen] = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
 	netatom[NetWMDemandsAttention] = XInternAtom(dpy, "_NET_WM_STATE_DEMANDS_ATTENTION", False);
 	/* TYPES */
@@ -582,7 +583,6 @@ bstack(Monitor *m) {
 void
 buttonpress(XEvent *e) {
 	unsigned int i, click;
-	Arg arg = {0};
 	Client *c;
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
@@ -598,10 +598,10 @@ buttonpress(XEvent *e) {
 		focus(c);
 		click = ClkClientWin;
 	}
-	/*for(i = 0; i < LENGTH(buttons); i++)
+	for(i = 0; i < LENGTH(buttons); i++)
 		if(click == buttons[i].click && buttons[i].func && buttons[i].button == ev->button
 		&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
-			buttons[i].func(click == ClkTagBar && buttons[i].arg.i == 0 ? &arg : &buttons[i].arg);*/
+			buttons[i].func(&buttons[i].arg);
 }
 
 void
@@ -927,15 +927,6 @@ enternotify(XEvent *e) {
 	focus(c);
 }
 
-/*void
-expose(XEvent *e) {
-	Monitor *m;
-	XExposeEvent *ev = &e->xexpose;
-
-	if(ev->count == 0 && (m = wintomon(ev->window)))
-		drawbar(m);
-}*/
-
 void
 focus(Client *c) {
 	if(!c || !ISVISIBLE(c))
@@ -1173,7 +1164,7 @@ manage(Window w, XWindowAttributes *wa) {
 	Client *c, *t = NULL;
 	Window trans = None;
 	XWindowChanges wc;
-	
+
 	if(!(c = calloc(1, sizeof(Client))))
 		die("fatal: could not malloc() %u bytes\n", sizeof(Client));
 	c->win = w;
