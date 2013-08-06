@@ -57,7 +57,6 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast };                           /* cursor */
-enum { ColBorder, ColLast };                                               /* color */
 enum { NetActiveWindow, NetClientList, NetClientListStacking,
        NetCurrentDesktop, NetNumberOfDesktops, NetSupported,
        NetSupportingCheck, NetWMDesktop, NetWMName, NetWMState,
@@ -100,12 +99,6 @@ struct Client {
 	Monitor *mon;
 	Window win;
 };
-
-typedef struct {
-	unsigned long norm[ColLast];
-	unsigned long sel[ColLast];
-	unsigned long urg[ColLast];
-} DC;
 
 typedef struct {
 	unsigned int mod;
@@ -286,9 +279,11 @@ static Atom wmatom[WMLast], netatom[NetLast];
 static Bool running = True;
 static Cursor cursor[CurLast];
 static Display *dpy;
-static DC dc;
 static Monitor *mons = NULL, *selmon = NULL;
 static Window root;
+static unsigned int win_norm;
+static unsigned int win_sel;
+static unsigned int win_urg;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -942,7 +937,7 @@ focus(Client *c) {
 		detachstack(c);
 		attachstack(c);
 		grabbuttons(c, True);
-		XSetWindowBorder(dpy, c->win, dc.sel[ColBorder]);
+		XSetWindowBorder(dpy, c->win, win_sel);
 		setfocus(c);
 	}
 	else
@@ -1198,7 +1193,7 @@ manage(Window w, XWindowAttributes *wa) {
 
 	wc.border_width = c->bw;
 	XConfigureWindow(dpy, w, CWBorderWidth, &wc);
-	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+	XSetWindowBorder(dpy, w, win_norm);
 	configure(c); /* propagates border_width, if size doesn't change */
 	updatewindowtype(c);
 	updatesizehints(c);
@@ -1579,6 +1574,7 @@ setclientstate(Client *c, long state) {
 
 	XChangeProperty(dpy, c->win, wmatom[WMState], wmatom[WMState], 32,
 			PropModeReplace, (unsigned char *)data, 2);
+
 }
 
 Bool
@@ -1684,9 +1680,9 @@ setup(void) {
 	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
 	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
 	/* init appearance */
-	dc.norm[ColBorder] = getcolor(normbordercolor);
-	dc.sel[ColBorder] = getcolor(selbordercolor);
-	dc.urg[ColBorder] = getcolor(urgbordercolor);
+	win_norm = getcolor(normbordercolor);
+	win_sel = getcolor(selbordercolor);
+	win_urg = getcolor(urgbordercolor);
 	/* set EWMH number of desktops */
 	ewmh_setnumbdesktops();
 	/* initialize EWMH current desktop */
@@ -1795,7 +1791,7 @@ unfocus(Client *c, Bool setfocus) {
 	if(!c)
 		return;
 	grabbuttons(c, False);
-	XSetWindowBorder(dpy, c->win, dc.norm[ColBorder]);
+	XSetWindowBorder(dpy, c->win, win_norm);
 	if(setfocus)
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 }
@@ -2037,7 +2033,7 @@ updatewmhints(Client *c) {
 		else {
 			c->isurgent = (wmh->flags & XUrgencyHint) ? True : False;
 			if(c->isurgent)
-				XSetWindowBorder(dpy, c->win, dc.urg[ColBorder]);
+				XSetWindowBorder(dpy, c->win, win_urg);
 		}
 		if(wmh->flags & InputHint)
 			c->neverfocus = !wmh->input;
