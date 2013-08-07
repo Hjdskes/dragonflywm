@@ -1,29 +1,36 @@
-# See LICENSE file for copyright and license details.
+# Makefile for dragonflywm - see LICENSE for license and copyright information
 
 VERSION = 0.1
-CC = cc
-PREFIX = /usr/local
+WMNAME  = dragonflywm
+
+PREFIX ?= /usr/local
+BINDIR ?= ${PREFIX}/bin
 MANPREFIX = ${PREFIX}/share/man
 
-# Xinerama - comment if you don't want it
-#XINERAMALIBS = -L${X11LIB} -lXinerama
-#XINERAMAFLAGS = -DXINERAMA
+X11INC = -I/usr/X11R6/include
+X11LIB = -L/usr/X11R6/lib -lX11
 
-# Flags
-CFLAGS = -std=c99 -pedantic -Wall -Os -I. -I/usr/include -I/usr/X11R6/include -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
-LDFLAGS = -s -L/usr/lib -lc -L/usr/X11R6/lib -lX11 ${XINERAMALIBS}
+INCS = -I. -I/usr/include ${X11INC}
+LIBS = -L/usr/lib -lc ${X11LIB}
 
-# Debug flags
-#CFLAGS = -g -std=c99 -pedantic -Wall -O0 -I/usr/include -I/usr/X11R6/include -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
-#LDFLAGS = -g -L/usr/lib -lc -L/usr/X11R6/lib -lX11 ${XINERAMALIBS}
+CFLAGS   = -std=c99 -pedantic -Wall -Wextra ${INCS} -DVERSION=\"${VERSION}\"
+LDFLAGS  = ${LIBS}
 
-SRC = dragonfly.c
+CC 	 = cc
+EXEC = ${WMNAME}
+
+SRC = ${WMNAME}.c
 OBJ = ${SRC:.c=.o}
 
-all: options dragonfly
+all: CFLAGS += -Os
+all: LDFLAGS += -s
+all: options ${WMNAME}
+
+debug: CFLAGS += -O0 -g
+debug: options ${WMNAME}
 
 options:
-	@echo dragonfly build options:
+	@echo ${WMNAME} build options:
 	@echo "CFLAGS   = ${CFLAGS}"
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
@@ -38,37 +45,24 @@ config.h:
 	@echo creating $@ from config.def.h
 	@cp config.def.h $@
 
-dragonfly: ${OBJ}
+${WMNAME}: ${OBJ}
 	@echo CC -o $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
 	@echo cleaning
-	@rm -f dragonfly ${OBJ} dragonfly-${VERSION}.tar.gz
-
-dist: clean
-	@echo creating dist tarball
-	@mkdir -p dragonfly-${VERSION}
-	@cp -R LICENSE Makefile README config.def.h config.mk \
-		dragonfly.1 ${SRC} dragonfly-${VERSION}
-	@tar -cf dragonfly-${VERSION}.tar dragonfly-${VERSION}
-	@gzip dragonfly-${VERSION}.tar
-	@rm -rf dragonfly-${VERSION}
+	@rm -fv ${WMNAME} ${OBJ} ${WMNAME}-${VERSION}.tar.gz
 
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
-	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f dragonfly ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/dragonfly
-	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
-	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	@sed "s/VERSION/${VERSION}/g" < dragonfly.1 > ${DESTDIR}${MANPREFIX}/man1/dragonfly.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/dragonfly.1
+	@install -Dm755 ${WMNAME} ${DESTDIR}${PREFIX}/bin/${WMNAME}
+	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man.1
+	@install -Dm644 ${WMNAME}.1 ${DESTDIR}${MANPREFIX}/man1/${WMNAME}.1
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
-	@rm -f ${DESTDIR}${PREFIX}/bin/dragonfly
+	@rm -f ${DESTDIR}${PREFIX}/bin/${WMNAME}
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
-	@rm -f ${DESTDIR}${MANPREFIX}/man1/dragonfly.1
+	@rm -f ${DESTDIR}${MANPREFIX}/man1/${WMNAME}.1
 
-.PHONY: all options clean dist install uninstall
+.PHONY: all options clean install uninstall
