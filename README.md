@@ -19,7 +19,8 @@ DragonflyWM is, as said, based on DWM. Everything draw and font related has been
 * attachaside;
 * urgentborder;
 * push;
-* netwmdemandsattention.
+* netwmdemandsattention;
+* focusfollowmousetag.
 
 All credit for these go to their original authors. For more licensing, see LICENSE.
 

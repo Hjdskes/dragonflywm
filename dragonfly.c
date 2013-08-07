@@ -366,20 +366,18 @@ ewmh_setcurrentdesktop(void) {
 
 void
 ewmh_updatecurrentdesktop(void) {
-	long data[] = { selmon->tagset[selmon->seltags] };
+	/*long data[] = { selmon->tagset[selmon->seltags] };*/
 	/*long data[] = { selmon->curtag };*/
 	int numtags = LENGTH(tags) + 1;
-	/*Monitor *m;
-	unsigned long *seltags;
-	unsigned int i;*/
+	Monitor *m;
+	unsigned int seltags;
+	unsigned int i;
 
-	/*seltags = calloc(1, numtags * sizeof(unsigned long));
-	for(m = mons; m; m = m->next) {
-		for(i = 0; i < numtags; i++)
-			seltags[itint2] = m->seltags;
-	}*/
+	/*seltags = calloc(1, numtags * sizeof(unsigned long));*/
+	for(m = mons; m; m = m->next)
+		seltags = m->seltags;
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
-			PropModeReplace, (unsigned char *)data, numtags);
+			PropModeReplace, (unsigned char *)seltags, numtags);
 	/*free(seltags);*/
 }
 
@@ -1705,7 +1703,7 @@ setup(void) {
 	/* set EWMH number of desktops */
 	ewmh_setnumbdesktops();
 	ewmh_setcurrentdesktop();
-	ewmh_updatecurrentdesktop();
+	/*ewmh_updatecurrentdesktop();*/
 
 	/* select for events */
 	wa.cursor = cursor[CurNormal];
@@ -2064,7 +2062,9 @@ updatewmhints(Client *c) {
 
 void
 view(const Arg *arg) {
+	int di;
 	unsigned int i;
+	Window win, dummy;
 
 	if((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
@@ -2087,7 +2087,11 @@ view(const Arg *arg) {
 	selmon->lt[selmon->sellt]= selmon->lts[selmon->curtag];
 	focus(NULL);
 	arrange(selmon);
-	ewmh_updatecurrentdesktop();
+	
+	XQueryPointer(dpy, root, &dummy, &win, &di, &di, &di, &di, &i);
+	focus(wintoclient(win));
+	XFlush(dpy);
+	/*ewmh_updatecurrentdesktop();*/
 }
 
 Client *
