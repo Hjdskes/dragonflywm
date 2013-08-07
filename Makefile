@@ -5,13 +5,17 @@ CC = cc
 PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
+# Xinerama - comment if you don't want it
+#XINERAMALIBS = -L${X11LIB} -lXinerama
+#XINERAMAFLAGS = -DXINERAMA
+
 # Flags
-#CFLAGS = -std=c99 -pedantic -Wall -Os -I. -I/usr/include -I/usr/X11R6/include -DVERSION=\"${VERSION}\"
-#LDFLAGS = -s -L/usr/lib -lc -L/usr/X11R6/lib -lX11
+CFLAGS = -std=c99 -pedantic -Wall -Os -I. -I/usr/include -I/usr/X11R6/include -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
+LDFLAGS = -s -L/usr/lib -lc -L/usr/X11R6/lib -lX11 ${XINERAMALIBS}
 
 # Debug flags
-CFLAGS = -g -std=c99 -pedantic -Wall -O0 -I/usr/include -I/usr/X11R6/include -DVERSION=\"${VERSION}\"
-LDFLAGS = -g -L/usr/lib -lc -L/usr/X11R6/lib -lX11
+#CFLAGS = -g -std=c99 -pedantic -Wall -O0 -I/usr/include -I/usr/X11R6/include -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
+#LDFLAGS = -g -L/usr/lib -lc -L/usr/X11R6/lib -lX11 ${XINERAMALIBS}
 
 SRC = dragonfly.c
 OBJ = ${SRC:.c=.o}
