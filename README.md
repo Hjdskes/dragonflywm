@@ -22,8 +22,6 @@ DragonflyWM is, as said, based on DWM. Everything draw and font related has been
 * netwmdemandsattention;
 * focusfollowmousetag.
 
-All credit for these go to their original authors. For more licensing, see LICENSE.
-
 Installation
 ------------
 In order to build DragonflyWM you need the Xlib header files.
