@@ -312,28 +312,28 @@ ewmh_init(void) {
 	netatom[NetClientListStacking] = XInternAtom(dpy, "_NET_CLIENT_LIST_STACKING", False);
 	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
-	/* STATES */
+	/* States */
 	netatom[NetWMState] = XInternAtom(dpy, "_NET_WM_STATE", False);
 	netatom[NetWMStateHidden] = XInternAtom(dpy, "_NET_WM_STATE_HIDDEN", False);
 	netatom[NetWMFullscreen] = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
 	netatom[NetWMDemandsAttention] = XInternAtom(dpy, "_NET_WM_STATE_DEMANDS_ATTENTION", False);
-	/* TYPES */
+	/* Types */
 	netatom[NetWMWindowType] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
 	netatom[NetWMWindowTypeNotification] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NOTIFICATION", False);
 	netatom[NetWMWindowTypeDock] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False);
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	netatom[NetWMWindowTypeSplash] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_SPLASH", False);
-	/* CLIENTS */
+	/* Clients */
 	netatom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
 	netatom[NetWMDesktop] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
-	/* OTHER */
+	/* Other */
 	netatom[Utf8String] = XInternAtom(dpy, "UTF8_STRING", False);
 
 	/* Tell which EWMH atoms are supported */
 	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
 			PropModeReplace, (unsigned char *) netatom, NetLast);
 
-	/* Create our own window! */
+	/* Create our own window */
 	wa.override_redirect = True;
 	win = XCreateWindow(dpy, root, -100, 0, 1, 1, 0, DefaultDepth(dpy, screen),
 			CopyFromParent, DefaultVisual(dpy, screen), CWOverrideRedirect, &wa);
@@ -348,10 +348,12 @@ ewmh_init(void) {
 
 void
 ewmh_setnumbdesktops(void) {
-	long data[] = { TAGMASK };
+	int i, desktops, numtags = LENGTH(tags) + 1;
 
+	for(i = 1; i < numtags; i++)
+		desktops++;
 	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL, 32,
-			PropModeReplace, (unsigned char *)data, 1);
+			PropModeReplace, (unsigned char *)&desktops, 1);
 }
 
 void
@@ -365,9 +367,20 @@ ewmh_setcurrentdesktop(void) {
 void
 ewmh_updatecurrentdesktop(void) {
 	long data[] = { selmon->tagset[selmon->seltags] };
+	/*long data[] = { selmon->curtag };*/
+	int numtags = LENGTH(tags) + 1;
+	/*Monitor *m;
+	unsigned long *seltags;
+	unsigned int i;*/
 
+	/*seltags = calloc(1, numtags * sizeof(unsigned long));
+	for(m = mons; m; m = m->next) {
+		for(i = 0; i < numtags; i++)
+			seltags[itint2] = m->seltags;
+	}*/
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
-			PropModeReplace, (unsigned char *)data, 1);
+			PropModeReplace, (unsigned char *)data, numtags);
+	/*free(seltags);*/
 }
 
 void
@@ -381,21 +394,23 @@ ewmh_updateclientdesktop(Client *c) {
 void
 ewmh_updateclientlist(void) {
 	Client *c;
+	unsigned int n;
 
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
-	for(c = selmon->clients; c; c = c->next)
-	XChangeProperty(dpy, root, netatom[NetClientList],
-			XA_WINDOW, 32, PropModeAppend, (unsigned char *)&(c->win), 1);
+	for(n = 0, c = selmon->clients; c; c = c->next, n++)
+		XChangeProperty(dpy, root, netatom[NetClientList],
+				XA_WINDOW, 32, PropModeAppend, (unsigned char *)&(c->win), 1);
 }
 
 void
 ewmh_updateclientlist_stacking(void) {
 	Client *c;
+	unsigned int n;
 
 	XDeleteProperty(dpy, root, netatom[NetClientListStacking]);
-	for(c = selmon->stack; c; c = c->snext)
-	XChangeProperty(dpy, root, netatom[NetClientListStacking],
-			XA_WINDOW, 32, PropModeAppend, (unsigned char *)&(c->win), 1);
+	for(n = 0, c = selmon->stack; c; c = c->snext, n++)
+		XChangeProperty(dpy, root, netatom[NetClientListStacking],
+				XA_WINDOW, 32, PropModeAppend, (unsigned char *)&(c->win), 1);
 }
 
 Bool
@@ -1673,21 +1688,25 @@ setup(void) {
 	sw = DisplayWidth(dpy, screen);
 	sh = DisplayHeight(dpy, screen);
 	updategeom();
+
 	/* init standard & EWMH atoms */
     ewmh_init();
+
 	/* init cursors */
 	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
 	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
 	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+
 	/* init appearance */
 	win_norm = getcolor(normbordercolor);
 	win_sel = getcolor(selbordercolor);
 	win_urg = getcolor(urgbordercolor);
+
 	/* set EWMH number of desktops */
 	ewmh_setnumbdesktops();
-	/* initialize EWMH current desktop */
 	ewmh_setcurrentdesktop();
 	ewmh_updatecurrentdesktop();
+
 	/* select for events */
 	wa.cursor = cursor[CurNormal];
 	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask|PointerMotionMask
