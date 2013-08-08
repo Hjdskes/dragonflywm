@@ -91,7 +91,7 @@ static void move_up();
 static void moveresize(const Arg *arg);
 static void mousemotion(const Arg *arg);
 static void next_win();
-static void nmaster(const Arg *arg); 
+static void nmaster(const Arg *arg);
 static void prev_win();
 static void quit(const Arg *arg);
 static void resize_master(const Arg *arg);
@@ -101,6 +101,7 @@ static void rotate_filled(const Arg *arg);
 static void spawn(const Arg *arg);
 static void swap_master();
 static void switch_mode(const Arg *arg);
+static void togglefloat();
 static void togglepanel();
 
 #include "config.h"
@@ -1234,6 +1235,13 @@ void tile(Desktop *d) {
     if (!d->head || d->mode == FLOAT) return; /* nothing to arange */
     layout[d->head->next ? d->mode:MONOCLE](0, TOP_PANEL && d->sbar ? PANEL_HEIGHT:0,
                                                   ww, wh + (d->sbar ? 0:PANEL_HEIGHT), d);
+}
+
+void togglefloat(void) {
+    Desktop *d = &desktops[currdeskidx];
+    if (!d->curr || d->curr->isfull || !d->curr->isfloat) return;
+    d->curr->isfloat = False;
+    tile(d);
 }
 
 /**
