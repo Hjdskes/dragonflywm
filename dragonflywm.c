@@ -25,7 +25,9 @@ enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_COUNT };
 enum { NET_SUPPORTED, NET_FULLSCREEN, NET_WM_STATE, NET_WM_DESKTOP,
        NET_ACTIVE, NET_CURRENT_DESKTOP, NET_NUMBER_OF_DESKTOPS,
-       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING, NET_COUNT };
+       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING, NET_WINDOW_TYPE,
+       NET_WINDOW_TYPE_DOCK, NET_WINDOW_TYPE_DIALOG, NET_WINDOW_TYPE_SPLASH,
+       NET_COUNT };
 
 /**
  * argument structure to be passed to function by config.h
@@ -721,6 +723,15 @@ void maprequest(XEvent *e) {
     XWindowAttributes wa = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
 
+    int i; unsigned long l; unsigned char *state = NULL; Atom a;
+    if (XGetWindowProperty(dis, w, netatoms[NET_WINDOW_TYPE], 0L, sizeof a,
+            False, XA_ATOM, &a, &i, &l, &l, &state) == Success && state)
+        if(*(Atom *)state == netatoms[NET_WINDOW_TYPE_DOCK]) {
+            XMapWindow(dis, w);
+	        if (state) XFree(state);
+            return;
+        }
+
     XClassHint ch = {0, 0};
     Bool follow = False, floating = False;
     int newdsk = currdeskidx;
@@ -740,11 +751,19 @@ void maprequest(XEvent *e) {
     if ((c->isfloat = (floating || d->mode == FLOAT)) && !c->istrans)
         XMoveWindow(dis, c->win, (ww - wa.width)/2, (wh - wa.height)/2);
 
-    int i; unsigned long l; unsigned char *state = NULL; Atom a;
+    if (XGetWindowProperty(dis, c->win, netatoms[NET_WINDOW_TYPE], 0L, sizeof a,
+            False, XA_ATOM, &a, &i, &l, &l, &state) == Success && state)
+        if(*(Atom *)state == netatoms[NET_WINDOW_TYPE_DIALOG] || *(Atom *)state == netatoms[NET_WINDOW_TYPE_SPLASH]) {
+            c->isfloat = True;
+            XMoveWindow(dis, c->win, (ww - wa.width)/2, (wh - wa.height)/2);
+        }
+    if (state) XFree(state);
+
     if (XGetWindowProperty(dis, c->win, netatoms[NET_WM_STATE], 0L, sizeof a,
-                False, XA_ATOM, &a, &i, &l, &l, &state) == Success && state)
+            False, XA_ATOM, &a, &i, &l, &l, &state) == Success && state)
         setfullscreen(c, d, (*(Atom *)state == netatoms[NET_FULLSCREEN]));
     if (state) XFree(state);
+
     updateclientlist();
     updateclientdesktop(c);
 
@@ -1098,10 +1117,14 @@ void setup(void) {
     netatoms[NET_ACTIVE]      = XInternAtom(dis, "_NET_ACTIVE_WINDOW",       False);
     netatoms[NET_FULLSCREEN]  = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN", False);
     netatoms[NET_WM_DESKTOP]  = XInternAtom(dis, "_NET_WM_DESKTOP",          False);
-    netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",      False);
-    netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",   False);
-    netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",          False);
-	netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING", False);
+    netatoms[NET_WINDOW_TYPE]       = XInternAtom(dis, "_NET_WM_WINDOW_TYPE",       False);
+    netatoms[NET_WINDOW_TYPE_DOCK]  = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",  False);
+    netatoms[NET_WINDOW_TYPE_SPLASH]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH", False);
+    netatoms[NET_WINDOW_TYPE_DIALOG]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+    netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",       False);
+    netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",    False);
+    netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",           False);
+    netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);
 
     /* propagate EWMH support */
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
