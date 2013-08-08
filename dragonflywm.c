@@ -23,7 +23,7 @@
 enum { RESIZE, MOVE };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_COUNT };
-enum { NET_SUPPORTED, NET_FULLSCREEN, NET_WM_STATE,
+enum { NET_SUPPORTED, NET_FULLSCREEN, NET_WM_STATE, NET_WM_DESKTOP,
        NET_ACTIVE, NET_CURRENT_DESKTOP, NET_NUMBER_OF_DESKTOPS,
        NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING, NET_COUNT };
 
@@ -173,6 +173,7 @@ static void setup(void);
 static void sigchld(int sig);
 static void stack(int x, int y, int w, int h, const Desktop *d);
 static void tile(Desktop *d);
+/*static void updateclientdesktop(Client *c);*/
 static void updateclientlist(void);
 static void updatecurrentdesktop(void);
 static void unmapnotify(XEvent *e);
@@ -303,7 +304,7 @@ void cleanup(void) {
     for (unsigned int i = 0; i < nchildren; i++) deletewindow(children[i]);
     if (children) XFree(children);
     XFreeCursor(dis, cur_norm);
-	XFreeCursor(dis, cur_move);
+    XFreeCursor(dis, cur_move);
     XSync(dis, False);
 }
 
@@ -634,8 +635,8 @@ void grabbuttons(Client *c) {
 void grabkeys(void) {
     KeyCode code;
     XUngrabKey(dis, AnyKey, AnyModifier, root);
-    unsigned int k, m, modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
 
+    unsigned int k, m, modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
     for (k = 0, m = 0; k < LENGTH(keys); k++, m = 0)
         while ((code = XKeysymToKeycode(dis, keys[k].keysym)) && m < LENGTH(modifiers))
             XGrabKey(dis, code, keys[k].mod|modifiers[m++], root, True, GrabModeAsync, GrabModeAsync);
@@ -655,7 +656,7 @@ void grid(int x, int y, int w, int h, const Desktop *d) {
     for (Client *c = d->head; c; c = c->next) {
         if (ISFFT(c)) continue; else ++i;
         if (i/rows + 1 > cols - n%cols) rows = n/cols + 1;
-        XMoveResizeWindow(dis, c->win, x + cn*cw, y + rn*ch/rows, cw - BORDER_WIDTH, ch/rows - BORDER_WIDTH); 
+        XMoveResizeWindow(dis, c->win, x + cn*cw, y + rn*ch/rows, cw - BORDER_WIDTH, ch/rows - BORDER_WIDTH);
         if (++rn >= rows) { rn = 0; cn++; }
     }
 }
@@ -737,6 +738,7 @@ void maprequest(XEvent *e) {
         setfullscreen(c, d, (*(Atom *)state == netatoms[NET_FULLSCREEN]));
     if (state) XFree(state);
     updateclientlist();
+    /*updateclientdesktop(c);*/
 
     if (currdeskidx == newdsk) { if (!ISFFT(c)) tile(d); XMapWindow(dis, c->win); }
     else if (follow) change_desktop(&(Arg){.i = newdsk});
@@ -796,7 +798,7 @@ void mousemotion(const Arg *arg) {
  * each window should cover all the available screen space
  */
 void monocle(int x, int y, int w, int h, const Desktop *d) {
-    for (Client *c = d->head; c; c = c->next) if (!ISFFT(c)) XMoveResizeWindow(dis, c->win, x, y, w, h); 
+    for (Client *c = d->head; c; c = c->next) if (!ISFFT(c)) XMoveResizeWindow(dis, c->win, x, y, w, h);
 }
 
 /**
@@ -929,7 +931,7 @@ void prev_win(void) {
 }
 
 /**
- * set unrgent hint for a window
+ * set urgent hint for a window
  */
 void propertynotify(XEvent *e) {
     Desktop *d = NULL; Client *c = NULL;
@@ -1087,6 +1089,7 @@ void setup(void) {
     netatoms[NET_WM_STATE]    = XInternAtom(dis, "_NET_WM_STATE",    False);
     netatoms[NET_ACTIVE]      = XInternAtom(dis, "_NET_ACTIVE_WINDOW",       False);
     netatoms[NET_FULLSCREEN]  = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN", False);
+    netatoms[NET_WM_DESKTOP]  = XInternAtom(dis, "_NET_WM_DESKTOP",          False);
     netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",      False);
     netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",   False);
     netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",          False);
@@ -1094,7 +1097,7 @@ void setup(void) {
 
     /* propagate EWMH support */
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
-              PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
+            PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
     setnumberofdesktops();
     setcurrentdesktop();
     updatecurrentdesktop();
@@ -1184,7 +1187,7 @@ void stack(int x, int y, int w, int h, const Desktop *d) {
     /* tile the next non-floating, non-fullscreen (and first) stack window adding p */
     int cw = (b ? h:w) - 2*BORDER_WIDTH - ma, ch = z - BORDER_WIDTH;
     if (b) XMoveResizeWindow(dis, c->win, x, y += ma, ch - BORDER_WIDTH + p, cw);
-    else   XMoveResizeWindow(dis, c->win, x += ma, y, cw, ch - BORDER_WIDTH + p); 
+    else   XMoveResizeWindow(dis, c->win, x += ma, y, cw, ch - BORDER_WIDTH + p);
 
     /* tile the rest of the non-floating, non-fullscreen stack windows */
     for (b ? (x += ch+p):(y += ch+p), c = c->next; c; c = c->next) {
@@ -1225,7 +1228,7 @@ void switch_mode(const Arg *arg) {
 
 /**
  * tile clients of the given desktop with the desktop's mode/layout
- * call the tiling handler fucntion taking account the panel height
+ * call the tiling handler function taking account the panel height
  */
 void tile(Desktop *d) {
     if (!d->head || d->mode == FLOAT) return; /* nothing to arange */
@@ -1240,6 +1243,13 @@ void togglepanel(void) {
     desktops[currdeskidx].sbar = !desktops[currdeskidx].sbar;
     tile(&desktops[currdeskidx]);
 }
+
+/*void updateclientdesktop(Client *c) {
+    long data[] = { NULL };
+
+    XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
+            PropModeReplace, (unsigned char *)data, 1);
+}*/
 
 void updateclientlist(void) {
     Client *c;
