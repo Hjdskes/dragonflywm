@@ -1150,7 +1150,7 @@ void setup(void) {
 
 void sigchld(__attribute__((unused)) int sig) {
     if (signal(SIGCHLD, sigchld) != SIG_ERR) while(0 < waitpid(-1, NULL, WNOHANG));
-    else err(EXIT_FAILURE, "cannot install SIGCHLD handler");
+    else err(EXIT_FAILURE, "dragonflywm: cannot install SIGCHLD handler");
 }
 
 /**
@@ -1355,7 +1355,7 @@ int xerror(__attribute__((unused)) Display *dis, XErrorEvent *ee) {
     || ee->request_code == X_CopyArea  ||  ee->request_code == X_PolySegment
                                        ||  ee->request_code == X_PolyText8))
     || ee->error_code   == BadWindow) return 0;
-    err(EXIT_FAILURE, "xerror: request: %d code: %d", ee->request_code, ee->error_code);
+    err(EXIT_FAILURE, "dragonflywm: request: %d code: %d", ee->request_code, ee->error_code);
 }
 
 /**
@@ -1363,14 +1363,14 @@ int xerror(__attribute__((unused)) Display *dis, XErrorEvent *ee) {
  * when the window manager initializes (see setup - XSetErrorHandler)
  */
 int xerrorstart(__attribute__((unused)) Display *dis, __attribute__((unused)) XErrorEvent *ee) {
-    errx(EXIT_FAILURE, "xerror: another window manager is already running");
+    errx(EXIT_FAILURE, "dragonflywm: another window manager is already running");
 }
 
 int main(int argc, char *argv[]) {
     if (argc == 2 && !strncmp(argv[1], "-v", 3))
-        errx(EXIT_SUCCESS, "version: %s - by c00kiemon5ter >:3 omnomnomnom", VERSION);
-    else if (argc != 1) errx(EXIT_FAILURE, "usage: man monsterwm");
-    if (!(dis = XOpenDisplay(NULL))) errx(EXIT_FAILURE, "cannot open display");
+        errx(EXIT_SUCCESS, "version: %s - by Unia and c00kiemon5ter", VERSION);
+    else if (argc != 1) errx(EXIT_FAILURE, "usage: man dragonflywm");
+    if (!(dis = XOpenDisplay(NULL))) errx(EXIT_FAILURE, "dragonflywm: cannot open display");
     setup();
     desktopinfo(); /* zero out every desktop on (re)start */
     run();
