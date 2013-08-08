@@ -116,6 +116,7 @@ static void togglepanel();
  * isfloat - set when the window is floating
  * istrans - set when the window is transient
  * win     - the window this client is representing
+ * desk    - the number of the desktop the client is on
  *
  * istrans is separate from isfloat as floating windows can be reset to
  * their tiling positions, while the transients will always be floating
@@ -124,6 +125,7 @@ typedef struct Client {
     struct Client *next;
     Bool isurgn, isfull, isfloat, istrans;
     Window win;
+    int desk;
 } Client;
 
 /**
@@ -174,7 +176,7 @@ static void setup(void);
 static void sigchld(int sig);
 static void stack(int x, int y, int w, int h, const Desktop *d);
 static void tile(Desktop *d);
-/*static void updateclientdesktop(Client *c);*/
+static void updateclientdesktop(Client *c);
 static void updateclientlist(void);
 static void updatecurrentdesktop(void);
 static void unmapnotify(XEvent *e);
@@ -330,7 +332,10 @@ void client_to_desktop(const Arg *arg) {
 
     /* link client to new desktop and make it the current */
     focus(l ? (l->next = c):n->head ? (n->head->next = c):(n->head = c), n);
+    c->desk = arg->i;
 
+    updateclientlist();
+    updateclientdesktop(c);
     if (FOLLOW_WINDOW) change_desktop(arg); else desktopinfo();
 }
 
@@ -565,6 +570,7 @@ void focus(Client *c, Desktop *d) {
     XSetInputFocus(dis, d->curr->win, RevertToPointerRoot, CurrentTime);
     XChangeProperty(dis, root, netatoms[NET_ACTIVE], XA_WINDOW, 32,
                     PropModeReplace, (unsigned char *)&d->curr->win, 1);
+    updateclientlist();
 
     XSync(dis, False);
 }
@@ -729,6 +735,7 @@ void maprequest(XEvent *e) {
     if (ch.res_name) XFree(ch.res_name);
 
     c = addwindow(w, (d = &desktops[newdsk])); /* from now on, use c->win */
+    c->desk = newdsk;
     c->istrans = XGetTransientForHint(dis, c->win, &w);
     if ((c->isfloat = (floating || d->mode == FLOAT)) && !c->istrans)
         XMoveWindow(dis, c->win, (ww - wa.width)/2, (wh - wa.height)/2);
@@ -739,7 +746,7 @@ void maprequest(XEvent *e) {
         setfullscreen(c, d, (*(Atom *)state == netatoms[NET_FULLSCREEN]));
     if (state) XFree(state);
     updateclientlist();
-    /*updateclientdesktop(c);*/
+    updateclientdesktop(c);
 
     if (currdeskidx == newdsk) { if (!ISFFT(c)) tile(d); XMapWindow(dis, c->win); }
     else if (follow) change_desktop(&(Arg){.i = newdsk});
@@ -1252,12 +1259,12 @@ void togglepanel(void) {
     tile(&desktops[currdeskidx]);
 }
 
-/*void updateclientdesktop(Client *c) {
-    long data[] = { NULL };
-
+void updateclientdesktop(Client *c) {
+    long data[] = { c->desk };
+    
     XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
             PropModeReplace, (unsigned char *)data, 1);
-}*/
+}
 
 void updateclientlist(void) {
     Client *c;
