@@ -2,7 +2,7 @@ DragonflyWM
 ============================
 DragonflyWM is a nimble, fast and modern tiling window manager for X, based on MonsterWM.
 
-Its goal is to be (somewhat) EWMH compliant, whilst staying lightweight. More information will be added as the project matures.
+Its goal is to be (somewhat) EWMH compliant, whilst staying lightweight. Currently, DragonflyWM supports third party panels, pagers and window switchers. Some of this is rudimentary, but as the project matures support will be improved. On the TODO list is support for minimizing and restoring clients and maybe struts as well, but there are a few other non-EWMH items on the list who will be implemented first.
 
 Installation
 ------------
