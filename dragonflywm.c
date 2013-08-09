@@ -200,7 +200,7 @@ static int xerrorstart(Display *dis, XErrorEvent *ee);
  */
 static Bool running = True;
 static int wh, ww, currdeskidx, prevdeskidx, retval;
-static unsigned int numlockmask, win_unfocus, win_focus, cur_norm, cur_move;
+static unsigned int numlockmask, win_unfocus, win_focus, /*win_urg, */cur_norm, cur_move;
 static Display *dis;
 static Window root;
 static Atom wmatoms[WM_COUNT], netatoms[NET_COUNT];
@@ -967,7 +967,7 @@ void propertynotify(XEvent *e) {
 
     XWMHints *wmh = XGetWMHints(dis, c->win);
     c->isurgn = (c != desktops[currdeskidx].curr && wmh && (wmh->flags & XUrgencyHint));
-
+    /*if (c->isurgn) XSetWindowBorder(dis, c->win, win_urg);*/
     if (wmh) XFree(wmh);
     desktopinfo();
 }
@@ -1096,6 +1096,7 @@ void setup(void) {
     /* get color for focused and unfocused client borders */
     win_focus = getcolor(FOCUS, screen);
     win_unfocus = getcolor(UNFOCUS, screen);
+    /*win_urg = getcolor(URGENT, screen);*/
 
     /* set numlockmask */
     XModifierKeymap *modmap = XGetModifierMapping(dis);
