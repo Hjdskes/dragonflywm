@@ -23,11 +23,11 @@
 enum { RESIZE, MOVE };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_COUNT };
-enum { NET_SUPPORTED, NET_FULLSCREEN, NET_WM_STATE, NET_WM_DESKTOP,
-       NET_ACTIVE, NET_CURRENT_DESKTOP, NET_NUMBER_OF_DESKTOPS,
-       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING, NET_WINDOW_TYPE,
-       NET_WINDOW_TYPE_DOCK, NET_WINDOW_TYPE_DIALOG, NET_WINDOW_TYPE_SPLASH,
-       NET_COUNT };
+enum { NET_ACTIVE, NET_SUPPORTED, NET_CLIENT_LIST,
+       NET_CLIENT_LIST_STACKING, NET_NUMBER_OF_DESKTOPS,
+       NET_CURRENT_DESKTOP, NET_WM_DESKTOP, NET_WM_STATE,
+       NET_FULLSCREEN, NET_WINDOW_TYPE, NET_WINDOW_TYPE_DOCK,
+       NET_WINDOW_TYPE_SPLASH, NET_WINDOW_TYPE_DIALOG, NET_COUNT };
 
 /**
  * argument structure to be passed to function by config.h
@@ -171,14 +171,13 @@ static Client* prevclient(Client *c, Desktop *d);
 static void propertynotify(XEvent *e);
 static void removeclient(Client *c, Desktop *d);
 static void run(void);
-static void setcurrentdesktop(void);
 static void setfullscreen(Client *c, Desktop *d, Bool fullscrn);
 static void setnumberofdesktops(void);
 static void setup(void);
 static void sigchld(int sig);
 static void stack(int x, int y, int w, int h, const Desktop *d);
 static void tile(Desktop *d);
-static void updateclientdesktop(Client *c);
+static void updateclientdesktop(Desktop *d);
 static void updateclientlist(void);
 static void updatecurrentdesktop(void);
 static void unmapnotify(XEvent *e);
@@ -294,6 +293,7 @@ void change_desktop(const Arg *arg) {
     XChangeWindowAttributes(dis, root, CWEventMask, &(XSetWindowAttributes){.event_mask = ROOTMASK});
     if (n->head) { tile(n); focus(n->curr, n); }
     updatecurrentdesktop();
+    /*updateclientdesktop(n);*/
     desktopinfo();
 }
 
@@ -337,7 +337,7 @@ void client_to_desktop(const Arg *arg) {
     c->desk = arg->i;
 
     updateclientlist();
-    updateclientdesktop(c);
+    /*updateclientdesktop(n);*/
     if (FOLLOW_WINDOW) change_desktop(arg); else desktopinfo();
 }
 
@@ -720,8 +720,6 @@ void last_desktop(void) {
 void maprequest(XEvent *e) {
     Desktop *d = NULL; Client *c = NULL;
     Window w = e->xmaprequest.window;
-    XWindowAttributes wa = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
 
     int i; unsigned long l; unsigned char *state = NULL; Atom a;
     if (XGetWindowProperty(dis, w, netatoms[NET_WINDOW_TYPE], 0L, sizeof a,
@@ -731,6 +729,9 @@ void maprequest(XEvent *e) {
 	        if (state) XFree(state);
             return;
         }
+
+    XWindowAttributes wa = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
 
     XClassHint ch = {0, 0};
     Bool follow = False, floating = False;
@@ -765,7 +766,7 @@ void maprequest(XEvent *e) {
     if (state) XFree(state);
 
     updateclientlist();
-    updateclientdesktop(c);
+    /*updateclientdesktop(d);*/
 
     if (currdeskidx == newdsk) { if (!ISFFT(c)) tile(d); XMapWindow(dis, c->win); }
     else if (follow) change_desktop(&(Arg){.i = newdsk});
@@ -1043,12 +1044,6 @@ void run(void) {
     while(running && !XNextEvent(dis, &ev)) if (events[ev.type]) events[ev.type](&ev);
 }
 
-void setcurrentdesktop(void) {
-    long data[] = { 0 };
-
-    XChangeProperty(dis, root, netatoms[NET_CURRENT_DESKTOP], XA_CARDINAL, 32,
-            PropModeReplace, (unsigned char *)data, 1);
-}
 /**
  * set the fullscreen state of a client
  *
@@ -1109,28 +1104,27 @@ void setup(void) {
             numlockmask = (1 << k);
     XFreeModifiermap(modmap);
 
-    /* set up atoms for dialog/notification windows */
-    wmatoms[WM_PROTOCOLS]     = XInternAtom(dis, "WM_PROTOCOLS",     False);
-    wmatoms[WM_DELETE_WINDOW] = XInternAtom(dis, "WM_DELETE_WINDOW", False);
-    netatoms[NET_SUPPORTED]   = XInternAtom(dis, "_NET_SUPPORTED",   False);
-    netatoms[NET_WM_STATE]    = XInternAtom(dis, "_NET_WM_STATE",    False);
-    netatoms[NET_ACTIVE]      = XInternAtom(dis, "_NET_ACTIVE_WINDOW",       False);
-    netatoms[NET_FULLSCREEN]  = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN", False);
-    netatoms[NET_WM_DESKTOP]  = XInternAtom(dis, "_NET_WM_DESKTOP",          False);
-    netatoms[NET_WINDOW_TYPE]       = XInternAtom(dis, "_NET_WM_WINDOW_TYPE",       False);
-    netatoms[NET_WINDOW_TYPE_DOCK]  = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",  False);
-    netatoms[NET_WINDOW_TYPE_SPLASH]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH", False);
-    netatoms[NET_WINDOW_TYPE_DIALOG]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-    netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",       False);
-    netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",    False);
+    /* set up atoms */
+    wmatoms[WM_PROTOCOLS]              = XInternAtom(dis, "WM_PROTOCOLS",               False);
+    wmatoms[WM_DELETE_WINDOW]          = XInternAtom(dis, "WM_DELETE_WINDOW",           False);
+    netatoms[NET_ACTIVE]               = XInternAtom(dis, "_NET_ACTIVE_WINDOW",         False);
+    netatoms[NET_SUPPORTED]            = XInternAtom(dis, "_NET_SUPPORTED",             False);
     netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",           False);
     netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);
+    netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",    False);
+    netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",       False);
+    netatoms[NET_WM_DESKTOP]           = XInternAtom(dis, "_NET_WM_DESKTOP",            False);
+    netatoms[NET_WM_STATE]             = XInternAtom(dis, "_NET_WM_STATE",              False);
+    netatoms[NET_FULLSCREEN]           = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN",   False);
+    netatoms[NET_WINDOW_TYPE]          = XInternAtom(dis, "_NET_WM_WINDOW_TYPE",        False);
+    netatoms[NET_WINDOW_TYPE_DOCK]     = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",   False);
+    netatoms[NET_WINDOW_TYPE_SPLASH]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH", False);
+    netatoms[NET_WINDOW_TYPE_DIALOG]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 
     /* propagate EWMH support */
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
     setnumberofdesktops();
-    setcurrentdesktop();
     updatecurrentdesktop();
 
     /* set the appropriate error handler
@@ -1282,11 +1276,44 @@ void togglepanel(void) {
     tile(&desktops[currdeskidx]);
 }
 
-void updateclientdesktop(Client *c) {
-    long data[] = { c->desk };
-    
+void updateclientdesktop(Desktop *d) {
+    /*Client *c;
+
+    for (c = d->head; c; c = c->next)
+        XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
+                PropModeReplace, (unsigned char *)&c->desk, 1);*/
+
+    /*int i, w, n = 0;
+    Desktop *d;
+    Client *c;
+    Window *wins = NULL;
+
+    for (i = 0; i < DESKTOPS; i++)
+        for (d = &desktops[i], c = d->head, w = 0; c; c = c->next, n++)
+            wins = malloc(sizeof(Window) * n);
+            wins[w++] = c->desk;
     XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
-            PropModeReplace, (unsigned char *)data, 1);
+            PropModeReplace, (unsigned char *)wins, 1);
+    free(wins);*/
+
+    /*unsigned long i;
+
+    for (i = 0; i < DESKTOPS && !c->desk; i++);
+        XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
+                PropModeReplace, (unsigned char *)&i, 1);*/
+
+    /*long data[] = { c->desk };
+    XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
+            PropModeReplace, (unsigned char *)data, 1);*/
+
+    /*int i;
+    Desktop *d;
+    Client *c;
+
+    for (i = 0; i < DESKTOPS; i++)
+        for (d = &desktops[i], c = d->head; c; c = c->next)
+            XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
+                    PropModeReplace, (unsigned char *)&c->desk, 1);*/
 }
 
 void updateclientlist(void) {
