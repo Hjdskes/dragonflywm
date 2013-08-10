@@ -23,8 +23,8 @@
 enum { RESIZE, MOVE };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_COUNT };
-enum { NET_ACTIVE, NET_SUPPORTED, NET_CLIENT_LIST,
-       NET_CLIENT_LIST_STACKING, NET_NUMBER_OF_DESKTOPS,
+enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
+       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING, NET_NUMBER_OF_DESKTOPS,
        NET_CURRENT_DESKTOP, NET_WM_DESKTOP, NET_WM_STATE,
        NET_FULLSCREEN, NET_WINDOW_TYPE, NET_WINDOW_TYPE_DOCK,
        NET_WINDOW_TYPE_SPLASH, NET_WINDOW_TYPE_DIALOG, NET_COUNT };
@@ -140,7 +140,7 @@ typedef struct Client {
  * curr - the currently highlighted window
  * prev - the client that previously had focus
  * sbar - the visibility status of the panel/statusbar
- * nm   - the number of windows in master area 
+ * nm   - the number of windows in master area
  */
 typedef struct {
     int mode, masz, sasz, nm;
@@ -177,7 +177,7 @@ static void setup(void);
 static void sigchld(int sig);
 static void stack(int x, int y, int w, int h, const Desktop *d);
 static void tile(Desktop *d);
-static void updateclientdesktop(Desktop *d);
+static void updateclientdesktop(Client *c);
 static void updateclientlist(void);
 static void updatecurrentdesktop(void);
 static void unmapnotify(XEvent *e);
@@ -293,7 +293,7 @@ void change_desktop(const Arg *arg) {
     XChangeWindowAttributes(dis, root, CWEventMask, &(XSetWindowAttributes){.event_mask = ROOTMASK});
     if (n->head) { tile(n); focus(n->curr, n); }
     updatecurrentdesktop();
-    /*updateclientdesktop(n);*/
+    /*updateclientdesktop(c);*/
     desktopinfo();
 }
 
@@ -337,8 +337,8 @@ void client_to_desktop(const Arg *arg) {
     c->desk = arg->i;
 
     updateclientlist();
-    /*updateclientdesktop(n);*/
-    if (FOLLOW_WINDOW) change_desktop(arg); else desktopinfo();
+    if (FOLLOW_WINDOW) change_desktop(arg); else { desktopinfo(); /*updateclientdesktop(c);*/ }
+
 }
 
 /**
@@ -371,7 +371,8 @@ void clientmessage(XEvent *e) {
      || (unsigned)e->xclient.data.l[2] == netatoms[NET_FULLSCREEN])) {
         setfullscreen(c, d, (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isfull)));
         if (!(c->isfloat || c->istrans) || !d->head->next) tile(d);
-    } else if (e->xclient.message_type == netatoms[NET_ACTIVE]) focus(c, d);
+    } else if (e->xclient.message_type == netatoms[NET_ACTIVE_WINDOW]) focus(c, d);
+    else if (e->xclient.message_type == netatoms[NET_CLOSE_WINDOW]) deletewindow(c->win);
 }
 
 /**
@@ -530,7 +531,7 @@ void focus(Client *c, Desktop *d) {
      * should and are handled here.
      */
     if (!d->head || !c) { /* no clients - no active window - nothing to do */
-        XDeleteProperty(dis, root, netatoms[NET_ACTIVE]);
+        XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
         d->curr = d->prev = NULL;
         return;
     } else if (d->prev == c && d->curr != c->next) { d->prev = prevclient((d->curr = c), d);
@@ -563,16 +564,17 @@ void focus(Client *c, Desktop *d) {
          *      - it is the only window on screen
          */
         XSetWindowBorderWidth(dis, c->win, c->isfull || (!ISFFT(c) &&
-            (d->mode == MONOCLE || !d->head->next)) ? 0:BORDER_WIDTH);
+                (d->mode == MONOCLE || !d->head->next)) ? 0:BORDER_WIDTH);
         if (c != d->curr) w[c->isfull ? --fl:ISFFT(c) ? --ft:--n] = c->win;
         if (CLICK_TO_FOCUS || c == d->curr) grabbuttons(c);
     }
     XRestackWindows(dis, w, LENGTH(w));
+    updateclientlist();
+    /*updateclientdesktop();*/
 
     XSetInputFocus(dis, d->curr->win, RevertToPointerRoot, CurrentTime);
-    XChangeProperty(dis, root, netatoms[NET_ACTIVE], XA_WINDOW, 32,
+    XChangeProperty(dis, root, netatoms[NET_ACTIVE_WINDOW], XA_WINDOW, 32,
                     PropModeReplace, (unsigned char *)&d->curr->win, 1);
-    updateclientlist();
 
     XSync(dis, False);
 }
@@ -766,13 +768,12 @@ void maprequest(XEvent *e) {
     if (state) XFree(state);
 
     updateclientlist();
-    /*updateclientdesktop(d);*/
 
     if (currdeskidx == newdsk) { if (!ISFFT(c)) tile(d); XMapWindow(dis, c->win); }
     else if (follow) change_desktop(&(Arg){.i = newdsk});
     focus(c, d);
 
-    if (!follow) desktopinfo();
+    if (!follow) { desktopinfo(); /*updateclientdesktop(c);*/ }
 }
 
 /**
@@ -1108,7 +1109,8 @@ void setup(void) {
     /* set up atoms */
     wmatoms[WM_PROTOCOLS]              = XInternAtom(dis, "WM_PROTOCOLS",               False);
     wmatoms[WM_DELETE_WINDOW]          = XInternAtom(dis, "WM_DELETE_WINDOW",           False);
-    netatoms[NET_ACTIVE]               = XInternAtom(dis, "_NET_ACTIVE_WINDOW",         False);
+    netatoms[NET_ACTIVE_WINDOW]        = XInternAtom(dis, "_NET_ACTIVE_WINDOW",         False);
+    netatoms[NET_CLOSE_WINDOW]         = XInternAtom(dis, "_NET_CLOSE_WINDOW",          False);
     netatoms[NET_SUPPORTED]            = XInternAtom(dis, "_NET_SUPPORTED",             False);
     netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",           False);
     netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);
@@ -1277,7 +1279,19 @@ void togglepanel(void) {
     tile(&desktops[currdeskidx]);
 }
 
-void updateclientdesktop(Desktop *d) {
+void updateclientdesktop(Client *c) {
+    /*Client *c;
+    Desktop *d;
+    Window root_return, parent_return, *children;
+    unsigned int nchildren;
+
+    for (unsigned int i = 0; i < nchildren; i++) {
+        wintoclient(children[i], &c, &d);
+        XChangeProperty(dis, children[i], netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
+                PropModeReplace, (unsigned char *)&d, 1);
+    }
+    if (children) XFree(children);*/
+
     /*Client *c;
 
     for (c = d->head; c; c = c->next)
@@ -1303,9 +1317,9 @@ void updateclientdesktop(Desktop *d) {
         XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
                 PropModeReplace, (unsigned char *)&i, 1);*/
 
-    /*long data[] = { c->desk };
+    long data[] = { c->desk };
     XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
-            PropModeReplace, (unsigned char *)data, 1);*/
+            PropModeReplace, (unsigned char *)data, 1);
 
     /*int i;
     Desktop *d;
