@@ -1305,8 +1305,11 @@ void tile(Desktop *d) {
 
 void togglefloat(void) {
     Desktop *d = &desktops[currdeskidx];
-    if (!d->curr || d->curr->isfull || !d->curr->isfloat) return;
-    d->curr->isfloat = False;
+    if (!d->curr || d->curr->isfull) return;
+    if (d->curr->isfloat)
+        d->curr->isfloat = False;
+    else
+        d->curr->isfloat = True;
     tile(d);
 }
 

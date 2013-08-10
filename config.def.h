@@ -69,6 +69,7 @@ static Key keys[] = {
     {  MOD1|CONTROL,     XK_r,             quit,           {.i = 0}}, /* quit with exit value 0 */
     {  MOD1|CONTROL,     XK_q,             quit,           {.i = 1}}, /* quit with exit value 1 */
     {  MOD1|CONTROL,     XK_b,             togglepanel,    {NULL}},
+    {  MOD1,             XK_space,         togglefloat,    {NULL}},
     {  MOD1,             XK_u,             focusurgent,    {NULL}},
     {  MOD1,             XK_q,             killclient,     {NULL}},
     {  MOD1,             XK_Return,        swap_master,    {NULL}},
