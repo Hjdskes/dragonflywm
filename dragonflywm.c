@@ -24,12 +24,12 @@ enum { RESIZE, MOVE };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_COUNT };
 enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
-       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING,
-       NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP,
-       NET_DESKTOP_NAMES, NET_WM_DESKTOP, NET_WM_STATE,
-       NET_FULLSCREEN, NET_WINDOW_TYPE, NET_WINDOW_TYPE_DOCK,
-       NET_WINDOW_TYPE_SPLASH, NET_WINDOW_TYPE_DIALOG,
-       UTF8_STRING, NET_COUNT };
+       NET_SUPPORTING_WM_CHECK, NET_WM_NAME, NET_CLIENT_LIST,
+       NET_CLIENT_LIST_STACKING, NET_NUMBER_OF_DESKTOPS,
+       NET_CURRENT_DESKTOP, NET_DESKTOP_NAMES, NET_WM_DESKTOP,
+       NET_WM_STATE, NET_FULLSCREEN, NET_WINDOW_TYPE,
+       NET_WINDOW_TYPE_DOCK, NET_WINDOW_TYPE_SPLASH,
+       NET_WINDOW_TYPE_DIALOG, UTF8_STRING, NET_COUNT };
 
 /**
  * argument structure to be passed to function by config.h
@@ -1096,6 +1096,9 @@ void setnumberofdesktops(void) {
  * set initial values
  */
 void setup(void) {
+    XSetWindowAttributes wa;
+    Window win;
+
     sigchld(0);
 
     /* screen and root window */
@@ -1115,7 +1118,7 @@ void setup(void) {
     for (unsigned int d = 0; d < DESKTOPS; d++)
         desktops[d] = (Desktop){ .name = desknames[d], .mode = initlayouts[d], .sbar = SHOW_PANEL, .nm = NMASTER };
 
-    /* get color for focused and unfocused client borders */
+    /* get colors for client borders */
     win_focus = getcolor(FOCUS, screen);
     win_unfocus = getcolor(UNFOCUS, screen);
     /*win_urg = getcolor(URGENT, screen);*/
@@ -1133,6 +1136,8 @@ void setup(void) {
     netatoms[NET_ACTIVE_WINDOW]        = XInternAtom(dis, "_NET_ACTIVE_WINDOW",         False);
     netatoms[NET_CLOSE_WINDOW]         = XInternAtom(dis, "_NET_CLOSE_WINDOW",          False);
     netatoms[NET_SUPPORTED]            = XInternAtom(dis, "_NET_SUPPORTED",             False);
+    netatoms[NET_SUPPORTING_WM_CHECK]  = XInternAtom(dis, "_NET_SUPPORTING_WM_CHECK",   False);
+    netatoms[NET_WM_NAME]              = XInternAtom(dis, "_NET_WM_NAME",               False);
     netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",           False);
     netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);
     netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",    False);
@@ -1150,6 +1155,16 @@ void setup(void) {
     /* propagate EWMH support */
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
+
+    static const char name[12] = "DragonflyWM";
+    wa.override_redirect = True;
+    win = XCreateWindow(dis, root, -100, 0, 1, 1, 0, DefaultDepth(dis, screen), CopyFromParent,
+            DefaultVisual(dis, screen), CWOverrideRedirect, &wa);
+    XChangeProperty(dis, win, netatoms[NET_WM_NAME], netatoms[UTF8_STRING], 8,
+            PropModeReplace, (unsigned char*)name, strlen(name));
+    XChangeProperty(dis, root, netatoms[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
+            PropModeReplace, (unsigned char*)&win, 1);
+
     setnumberofdesktops();
     setdesktopnames();
     updatecurrentdesktop();
