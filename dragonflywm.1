@@ -1,0 +1,257 @@
+.TH DRAGONFLYWM 1 DragonflyWM
+.SH NAME
+DragonflyWM \- a nimble, fast and modern tiling window manager
+.SH SYNOPSIS
+.B DragonflyWM
+.RB [ \-v ]
+.SH DESCRIPTION
+.I DragonflyWM
+is a nimble, fast and modern tiling window manager for X, based on MonsterWM. Its goal is to be (somewhat) EWMH compliant and thus to deliver you with a modern tiling environment.
+.P
+.SH MODES
+.I DragonflyWM
+comes with four tiling layouts by default plus the floating mode.
+It allows the usual method of tiling window managers with the new window as
+the master window, but it also provides the ability to have the new window opened
+as the last window (at the bottom) of the stack.
+.P
+the available modes:
+.TP
+.B Tile stack
+the stack clients are tiled on the right side of the master clients.
+.TP
+.B Bottom stack
+the stack clients are tiled at the bottom the master clients.
+.TP
+.B Grid mode
+clients are tiled in a grid, equaly sharing and dividing the screen space.
+.TP
+.B Monocle mode
+also known as fullscreen or max mode, where the clients take up the entire
+screen space. Other clients are hidden behind the current shown client.
+.TP
+.B Floating mode
+windows can move and be resized freely in the screen space, like on a stacking
+window manager. Windows retain their floating status until the user switches
+to a tiling mode.
+.SH OPTIONS
+.TP
+.B \-v
+prints version information to standard output, then exits.
+.SH USAGE
+.SS Panel
+.P
+.I DragonflyWM
+is compatible with third party panels such as tint2.
+.P
+the available settings in
+.I config.h
+for the panel, are:
+.TP
+.B SHOW_PANEL
+whether
+.I DragonflyWM
+should reserve space for a panel.
+.TP
+.B PANEL_HEIGHT
+how much space should be reserved for use by the panel. Set to
+.B 0
+to disable the panel completely.
+.TP
+.B TOP_PANEL
+whether the panel should be on top or bottom of the screen.
+.SS Keyboard and mouse commands
+All of
+.I DragonflyWM's
+commands can be customized by editing
+.I config.h
+and recompiling.
+.P
+The default keyboard-bindings include:
+.TP
+.B Mod1\-Ctrl\-b
+Toggles the panel on and off.
+.TP
+.B Mod1\-u
+Focus the window with an urgent hint and focus the appropriate desktop if needed.
+.TP
+.B Mod1\-q
+Close focused window.
+.TP
+.B Mod1\-j
+Focus next window.
+.TP
+.B Mod1\-k
+Focus previous window.
+.TP
+.B Mod1\-[
+Increase master area size.
+.TP
+.B Mod1\-]
+Decrease master area size.
+.TP
+.B Mod1\-Shift\-[
+Shrink the size of the first stack window.
+.TP
+.B Mod1\-Shift\-]
+Grow the size of the first stack window.
+.TP
+.B Mod1\-Left
+focus the previous desktop.
+.TP
+.B Mod1\-Right
+focus the next desktop.
+.TP
+.B Mod1\-Shift\-Left
+focus the previous desktop that has windows open.
+.TP
+.B Mod1\-Shift\-Right
+focus the next desktop that has windows open.
+.TP
+.B Mod1\-Tab
+Toggles to the last selected desktop.
+.TP
+.B Mod1\-Return
+Swaps the focused window to/from the master area (tiled layouts only).
+.TP
+.B Mod1\-Down
+Move the focused window down the stack.
+.TP
+.B Mod1\-Up
+Move the focused window up the stack.
+.TP
+.B Mod1\-t
+Sets the tiled layout.
+.TP
+.B Mod1\-m
+Sets the monocle layout.
+.TP
+.B Mod1\-b
+Sets the bottom stack layout.
+.TP
+.B Mod1\-g
+Sets the grid layout.
+.TP
+.B Mod1\-f
+Sets the floating layout.
+.TP
+.B Mod1\-Ctrl\-r
+Quit with exit value 0 (useful for restarts of the wm).
+.TP
+.B Mod1\-Ctrl\-q
+Quit with exit value 1 (differentiate quit from restart).
+.TP
+.B Mod1\-1
+Start
+.BR gnome-terminal.
+.TP
+.B Mod1\-r
+Start
+.BR dmenu (1).
+.TP
+.B MOD4\-{Down,Up,Right,Left} Arrow
+move the current window to the corresponding direction.
+.TP
+.B MOD4\-Shift\-{Down,Up,Right,Left} Arrow
+resize the current window to the corresponding direction.
+.TP
+.B Mod1\-F{1..n}
+Move to the nth desktop. By default,
+.I DragonflyWM
+is configured with four desktops.
+The setting in
+.I config.h
+.B FOLLOW_WINDOW
+defines whether the focus should be moved to
+the new desktop where the window moved to.
+.TP
+.B Mod1\-Shift\-F{1..n}
+Move focused window to nth workspace.
+.P
+The default mouse-bindings include:
+.TP
+.B Mod1\-Button1
+Dragging the mouse will move the selected window.
+.TP
+.B Mod1\-Button2
+Clicking on a floating client tiles it again.
+.TP
+.B Mod1\-Button3
+Dragging the mouse will resize the selected window.
+.SS Customization
+.I DragonflyWM
+is customized by copying
+.I config.def.h
+to
+.I config.h
+and (re)compiling the source code.
+.P
+Settings other than the above covered include:
+.TP
+.B MASTER_SIZE
+set the size of the master area that
+will be used by the master clients.
+.TP
+.B ATTACH_ASIDE
+whether new stack clients should spawn as the master window,
+or as the last stack window.
+.TP
+.B FOLLOW_MOUSE
+whether to focus the window the mouse just entered.
+.TP
+.B FOLLOW_WINDOW
+whether to follow the window to the new desktop where it moved to.
+.TP
+.B CLICK_TO_FOCUS
+whether an action on a window (eg clicking, or scrolling)
+will give the window focus. Disabling this gives the user
+the ability to, for example, look up things on a web browser
+without losing focus from the terminal etc.
+.TP
+.B BORDER_WIDTH
+the width of the borders the clients have.
+.TP
+.B FOCUS / UNFOCUS
+the colors for the borders of focused and unfocused windows.
+.TP
+.B DESKTOPS
+the number of desktops to use.
+.TP
+.B DEFAULT_DESKTOP
+which desktop to focus by default.
+.TP
+.B initlayouts
+the initial layout for each desktop.
+.TP
+.B desknames
+the name for each desktop.
+.TP
+.B MINWSZ
+the minimum window size allowed. Prevents over resizing with
+the mouse or keyboard (e.g. resizing the master area).
+.P
+users can set
+.B rules
+on applications, by matching their
+.B class
+or
+.B instance
+name. The rules can specify on which
+.B desktop
+the application should start (or
+.B -1
+to signify the current desktop), whether the
+.B focus
+should change to that desktop, when the application starts
+and whether the application should start on
+.B floating
+or tiled mode.
+.SH SEE ALSO
+.BR dmenu (1)
+.SH BUGS
+.I DragonflyWM
+is under active development. Please report all bugs to the author.
+.SH AUTHOR
+Jente Hidskes <jthidskes at outlook dot com>
+
+

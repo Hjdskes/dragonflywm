@@ -11,7 +11,8 @@
 #define SHIFT           ShiftMask
 
 /** generic settings **/
-#define MASTER_SIZE     0.70
+#define MASTER_SIZE     0.70      /* size of the master area */
+#define NMASTER         1         /* number of windows in master area by default */
 #define SHOW_PANEL      True      /* show panel by default on exec */
 #define TOP_PANEL       False     /* False means panel is on bottom */
 #define PANEL_HEIGHT    40        /* 0 for no space for panel, thus no panel */
@@ -27,7 +28,7 @@
 #define MINWSZ          50        /* minimum window size in pixels  */
 #define DEFAULT_DESKTOP 0         /* the desktop to focus initially */
 #define DESKTOPS        4         /* number of desktops - edit DESKTOPCHANGE keys to suit */
-#define NMASTER         1         /* number of windows in master area by default */
+
 
 /**
  * layouts and names for each desktop
