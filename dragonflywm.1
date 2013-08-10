@@ -15,51 +15,50 @@ It allows the usual method of tiling window managers with the new window as
 the master window, but it also provides the ability to have the new window opened
 as the last window (at the bottom) of the stack.
 .P
-the available modes:
+The available modes:
 .TP
 .B Tile stack
-the stack clients are tiled on the right side of the master clients.
+Stacked clients are tiled on the right side of the master clients.
 .TP
 .B Bottom stack
-the stack clients are tiled at the bottom the master clients.
+Stacked clients are tiled at the bottom of the master clients.
 .TP
 .B Grid mode
-clients are tiled in a grid, equaly sharing and dividing the screen space.
+All clients are tiled in a grid, equally sharing and dividing the available screen space.
 .TP
 .B Monocle mode
-also known as fullscreen or max mode, where the clients take up the entire
-screen space. Other clients are hidden behind the current shown client.
+All clients take up the entire available screen space. Other clients are hidden behind the current shown client.
 .TP
 .B Floating mode
-windows can move and be resized freely in the screen space, like on a stacking
-window manager. Windows retain their floating status until the user switches
+Clients can be moved and resized freely around the screen, like a stacking
+window manager. Clients retain their floating status until the user switches
 to a tiling mode.
 .SH OPTIONS
 .TP
 .B \-v
-prints version information to standard output, then exits.
+Prints the version information to standard output, then exits.
 .SH USAGE
-.SS Panel
+.SS Panels
 .P
 .I DragonflyWM
 is compatible with third party panels such as tint2.
 .P
-the available settings in
+The available settings in
 .I config.h
 for the panel, are:
 .TP
 .B SHOW_PANEL
-whether
+Whether
 .I DragonflyWM
 should reserve space for a panel.
 .TP
 .B PANEL_HEIGHT
-how much space should be reserved for use by the panel. Set to
+How much space should be reserved for the panel. Set to
 .B 0
 to disable the panel completely.
 .TP
 .B TOP_PANEL
-whether the panel should be on top or bottom of the screen.
+Whether the panel should be on the top or on the bottom of the screen.
 .SS Keyboard and mouse commands
 All of
 .I DragonflyWM's
@@ -84,10 +83,10 @@ Focus next window.
 .B Mod1\-k
 Focus previous window.
 .TP
-.B Mod1\-[
+.B Mod1\-]
 Increase master area size.
 .TP
-.B Mod1\-]
+.B Mod1\-[
 Decrease master area size.
 .TP
 .B Mod1\-Shift\-[
@@ -97,22 +96,22 @@ Shrink the size of the first stack window.
 Grow the size of the first stack window.
 .TP
 .B Mod1\-Left
-focus the previous desktop.
+Focus the previous desktop.
 .TP
 .B Mod1\-Right
-focus the next desktop.
+Focus the next desktop.
 .TP
 .B Mod1\-Shift\-Left
-focus the previous desktop that has windows open.
+Focus the previous desktop that has clients open.
 .TP
 .B Mod1\-Shift\-Right
-focus the next desktop that has windows open.
+Focus the next desktop that has clients open.
 .TP
 .B Mod1\-Tab
-Toggles to the last selected desktop.
+Switch to the last selected desktop.
 .TP
 .B Mod1\-Return
-Swaps the focused window to/from the master area (tiled layouts only).
+Moves the focused window to/from the master area (tiled layouts only).
 .TP
 .B Mod1\-Down
 Move the focused window down the stack.
@@ -143,27 +142,28 @@ Quit with exit value 1 (differentiate quit from restart).
 .TP
 .B Mod1\-1
 Start
-.BR gnome-terminal.
+.BR xterm (1).
 .TP
 .B Mod1\-r
 Start
 .BR dmenu (1).
 .TP
-.B MOD4\-{Down,Up,Right,Left} Arrow
-move the current window to the corresponding direction.
+.B MOD4\-{Down,Up,Right,Left} arrow
+Move the current window to the corresponding direction.
 .TP
-.B MOD4\-Shift\-{Down,Up,Right,Left} Arrow
-resize the current window to the corresponding direction.
+.B MOD4\-Shift\-{Down,Up,Right,Left} arrow
+Resize the current window to the corresponding direction.
 .TP
 .B Mod1\-F{1..n}
 Move to the nth desktop. By default,
 .I DragonflyWM
 is configured with four desktops.
-The setting in
-.I config.h
+The setting
 .B FOLLOW_WINDOW
+in
+.I config.h
 defines whether the focus should be moved to
-the new desktop where the window moved to.
+the new desktop the window moved to.
 .TP
 .B Mod1\-Shift\-F{1..n}
 Move focused window to nth workspace.
@@ -189,52 +189,52 @@ and (re)compiling the source code.
 Settings other than the above covered include:
 .TP
 .B MASTER_SIZE
-set the size of the master area that
+Set the size of the master area that
 will be used by the master clients.
 .TP
 .B NMASTER
-sets the number of clients that will be
+Sets the number of clients that will be
 in the master area.
 .TP
 .B ATTACH_ASIDE
-whether new stack clients should spawn as the master window,
+Whether new clients should spawn as the master window
 or as the last stack window.
 .TP
 .B FOLLOW_MOUSE
-whether to focus the window the mouse just entered.
+Whether to focus the window the mouse just entered.
 .TP
 .B FOLLOW_WINDOW
-whether to follow the window to the new desktop where it moved to.
+Whether to follow the window to the new desktop it moved to.
 .TP
 .B CLICK_TO_FOCUS
-whether an action on a window (eg clicking, or scrolling)
+Whether an action on a window (e.g. clicking or scrolling)
 will give the window focus. Disabling this gives the user
 the ability to, for example, look up things on a web browser
-without losing focus from the terminal etc.
+without losing focus from the terminal.
 .TP
 .B BORDER_WIDTH
-the width of the borders the clients have.
+The width of the borders the clients have.
 .TP
 .B FOCUS / UNFOCUS
-the colors for the borders of focused and unfocused windows.
+The colors for the borders of focused and unfocused windows.
 .TP
 .B DESKTOPS
-the number of desktops to use.
+The number of desktops to use.
 .TP
 .B DEFAULT_DESKTOP
-which desktop to focus by default.
+Which desktop to focus by default.
 .TP
 .B initlayouts
-the initial layout for each desktop.
+The initial layout for each desktop.
 .TP
 .B desknames
-the name for each desktop.
+The (EWMH) name for each desktop.
 .TP
 .B MINWSZ
-the minimum window size allowed. Prevents over resizing with
-the mouse or keyboard (e.g. resizing the master area).
+The minimum window size allowed. Prevents over-resizing with
+the mouse or the keyboard (e.g. when resizing the master area).
 .P
-users can set
+Users can set
 .B rules
 on applications, by matching their
 .B class
@@ -246,12 +246,12 @@ the application should start (or
 .B -1
 to signify the current desktop), whether the
 .B focus
-should change to that desktop, when the application starts
+should change to that desktop when the application starts
 and whether the application should start on
 .B floating
 or tiled mode.
 .SH SEE ALSO
-.BR dmenu (1)
+.BR dmenu (1) xterm (1)
 .SH BUGS
 .I DragonflyWM
 is under active development. Please report all bugs to the author.

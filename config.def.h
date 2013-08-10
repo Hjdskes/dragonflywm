@@ -43,7 +43,6 @@ static const char *desknames[] = { "Web", "Chat", "Term", "Work", NULL };
 static const AppRule rules[] = { \
     /*  class          desktop  follow  float */
     { "Firefox",          0,    False,  False },
-    { "Gnome-terminal",   2,    False,  False },
     { "MPlayer",          3,    True,   True  },
     { "Gimp",             3,    False,  False },
 };
@@ -55,7 +54,7 @@ static const AppRule rules[] = { \
  * custom commands
  */
 static const char *menu[]    = { "dmenu_run", "-f", "-p", "Run:", NULL };
-static const char *term[]    = { "gnome-terminal", NULL };
+static const char *term[]    = { "xterm", NULL };
 static const char *browser[] = { "firefox", NULL };
 
 #define DESKTOPCHANGE(K,N) \
