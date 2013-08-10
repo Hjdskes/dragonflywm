@@ -1288,7 +1288,6 @@ void swap_master(void) {
 void switch_mode(const Arg *arg) {
     Desktop *d = &desktops[currdeskidx];
     if (d->mode != arg->i) d->mode = arg->i;
-    else if (d->mode != FLOAT) for (Client *c = d->head; c; c = c->next) c->isfloat = False;
     if (d->head) { tile(d); focus(d->curr, d); }
     desktopinfo();
 }
@@ -1306,10 +1305,8 @@ void tile(Desktop *d) {
 void togglefloat(void) {
     Desktop *d = &desktops[currdeskidx];
     if (!d->curr || d->curr->isfull) return;
-    if (d->curr->isfloat)
-        d->curr->isfloat = False;
-    else
-        d->curr->isfloat = True;
+    if (d->curr->isfloat) d->curr->isfloat = False;
+    else d->curr->isfloat = True;
     tile(d);
 }
 
