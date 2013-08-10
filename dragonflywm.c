@@ -206,6 +206,7 @@ static int xerrorstart(Display *dis, XErrorEvent *ee);
 static Bool running = True;
 static int wh, ww, currdeskidx, prevdeskidx, retval;
 static unsigned int numlockmask, win_unfocus, win_focus, /*win_urg, */cur_norm, cur_move;
+static const char wmname[12] = "DragonflyWM";
 static Display *dis;
 static Window root;
 static Atom wmatoms[WM_COUNT], netatoms[NET_COUNT];
@@ -1156,12 +1157,11 @@ void setup(void) {
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
 
-    static const char name[12] = "DragonflyWM";
     wa.override_redirect = True;
     win = XCreateWindow(dis, root, -100, 0, 1, 1, 0, DefaultDepth(dis, screen), CopyFromParent,
             DefaultVisual(dis, screen), CWOverrideRedirect, &wa);
     XChangeProperty(dis, win, netatoms[NET_WM_NAME], netatoms[UTF8_STRING], 8,
-            PropModeReplace, (unsigned char*)name, strlen(name));
+            PropModeReplace, (unsigned char*)wmname, 12);
     XChangeProperty(dis, root, netatoms[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
             PropModeReplace, (unsigned char*)&win, 1);
 
@@ -1186,7 +1186,7 @@ void setup(void) {
 
 void sigchld(__attribute__((unused)) int sig) {
     if (signal(SIGCHLD, sigchld) != SIG_ERR) while(0 < waitpid(-1, NULL, WNOHANG));
-    else err(EXIT_FAILURE, "dragonflywm: cannot install SIGCHLD handler");
+    else err(EXIT_FAILURE, "%s: cannot install SIGCHLD handler", wmname);
 }
 
 /**
@@ -1436,7 +1436,7 @@ int xerror(__attribute__((unused)) Display *dis, XErrorEvent *ee) {
     || ee->request_code == X_CopyArea  ||  ee->request_code == X_PolySegment
                                        ||  ee->request_code == X_PolyText8))
     || ee->error_code   == BadWindow) return 0;
-    err(EXIT_FAILURE, "dragonflywm: request: %d code: %d", ee->request_code, ee->error_code);
+    err(EXIT_FAILURE, "%s: request: %d code: %d", wmname, ee->request_code, ee->error_code);
 }
 
 /**
@@ -1444,14 +1444,14 @@ int xerror(__attribute__((unused)) Display *dis, XErrorEvent *ee) {
  * when the window manager initializes (see setup - XSetErrorHandler)
  */
 int xerrorstart(__attribute__((unused)) Display *dis, __attribute__((unused)) XErrorEvent *ee) {
-    errx(EXIT_FAILURE, "dragonflywm: another window manager is already running");
+    errx(EXIT_FAILURE, "%s: another window manager is already running", wmname);
 }
 
 int main(int argc, char *argv[]) {
     if (argc == 2 && !strncmp(argv[1], "-v", 3))
-        errx(EXIT_SUCCESS, "version: %s - by Unia and c00kiemon5ter", VERSION);
+        errx(EXIT_SUCCESS, " %s version: %s - by Unia and c00kiemon5ter", wmname, VERSION);
     else if (argc != 1) errx(EXIT_FAILURE, "usage: man dragonflywm");
-    if (!(dis = XOpenDisplay(NULL))) errx(EXIT_FAILURE, "dragonflywm: cannot open display");
+    if (!(dis = XOpenDisplay(NULL))) errx(EXIT_FAILURE, "%s: cannot open display", wmname);
     setup();
     desktopinfo(); /* zero out every desktop on (re)start */
     run();
