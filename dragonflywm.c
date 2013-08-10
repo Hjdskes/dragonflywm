@@ -24,10 +24,12 @@ enum { RESIZE, MOVE };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_COUNT };
 enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
-       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING, NET_NUMBER_OF_DESKTOPS,
-       NET_CURRENT_DESKTOP, NET_WM_DESKTOP, NET_WM_STATE,
+       NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING,
+       NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP,
+       NET_DESKTOP_NAMES, NET_WM_DESKTOP, NET_WM_STATE,
        NET_FULLSCREEN, NET_WINDOW_TYPE, NET_WINDOW_TYPE_DOCK,
-       NET_WINDOW_TYPE_SPLASH, NET_WINDOW_TYPE_DIALOG, NET_COUNT };
+       NET_WINDOW_TYPE_SPLASH, NET_WINDOW_TYPE_DIALOG,
+       UTF8_STRING, NET_COUNT };
 
 /**
  * argument structure to be passed to function by config.h
@@ -141,11 +143,13 @@ typedef struct Client {
  * prev - the client that previously had focus
  * sbar - the visibility status of the panel/statusbar
  * nm   - the number of windows in master area
+ * name - the name of the desktop
  */
 typedef struct {
     int mode, masz, sasz, nm;
     Client *head, *curr, *prev;
     Bool sbar;
+    const char *name;
 } Desktop;
 
 /* hidden function prototypes sorted alphabetically */
@@ -171,6 +175,7 @@ static Client* prevclient(Client *c, Desktop *d);
 static void propertynotify(XEvent *e);
 static void removeclient(Client *c, Desktop *d);
 static void run(void);
+static void setdesktopnames(void);
 static void setfullscreen(Client *c, Desktop *d, Bool fullscrn);
 static void setnumberofdesktops(void);
 static void setup(void);
@@ -1045,6 +1050,22 @@ void run(void) {
     while(running && !XNextEvent(dis, &ev)) if (events[ev.type]) events[ev.type](&ev);
 }
 
+void setdesktopnames(void) {
+    char buf[1024], *pos;
+    unsigned int i;
+    int len = 0;
+
+    pos = buf;
+    for (i = 0; i < DESKTOPS; i++) {
+        snprintf(pos, strlen(desktops[i].name) + 1, "%s", desktops[i].name);
+        pos += (strlen(desktops[i].name) + 1);
+    }
+    len = pos - buf;
+
+    XChangeProperty(dis, root, netatoms[NET_DESKTOP_NAMES], netatoms[UTF8_STRING], 8,
+            PropModeReplace, (unsigned char *)buf, len);
+}
+
 /**
  * set the fullscreen state of a client
  *
@@ -1090,9 +1111,9 @@ void setup(void) {
     cur_move = XCreateFontCursor(dis, XC_fleur);
     XDefineCursor(dis, root, cur_norm);
 
-    /* initialize mode and panel visibility for each desktop */
+    /* initialize each desktop */
     for (unsigned int d = 0; d < DESKTOPS; d++)
-        desktops[d] = (Desktop){ .mode = initlayouts[d], .sbar = SHOW_PANEL, .nm = NMASTER };
+        desktops[d] = (Desktop){ .name = desknames[d], .mode = initlayouts[d], .sbar = SHOW_PANEL, .nm = NMASTER };
 
     /* get color for focused and unfocused client borders */
     win_focus = getcolor(FOCUS, screen);
@@ -1116,6 +1137,7 @@ void setup(void) {
     netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);
     netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",    False);
     netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",       False);
+    netatoms[NET_DESKTOP_NAMES]        = XInternAtom(dis, "_NET_DESKTOP_NAMES",         False);
     netatoms[NET_WM_DESKTOP]           = XInternAtom(dis, "_NET_WM_DESKTOP",            False);
     netatoms[NET_WM_STATE]             = XInternAtom(dis, "_NET_WM_STATE",              False);
     netatoms[NET_FULLSCREEN]           = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN",   False);
@@ -1123,11 +1145,13 @@ void setup(void) {
     netatoms[NET_WINDOW_TYPE_DOCK]     = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",   False);
     netatoms[NET_WINDOW_TYPE_SPLASH]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH", False);
     netatoms[NET_WINDOW_TYPE_DIALOG]   = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+    netatoms[UTF8_STRING]               = XInternAtom(dis, "UTF8_STRING",                False);
 
     /* propagate EWMH support */
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
     setnumberofdesktops();
+    setdesktopnames();
     updatecurrentdesktop();
 
     /* set the appropriate error handler
