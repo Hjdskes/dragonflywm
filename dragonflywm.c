@@ -212,7 +212,7 @@ static int wh, ww, currdeskidx, prevdeskidx, retval;
 static unsigned int numlockmask, win_unfocus, win_focus, cur_norm, cur_move;
 static const char wmname[12] = "DragonflyWM";
 static Display *dis;
-static Window root;
+static Window root, supportwin;
 static Atom wmatoms[WM_COUNT], netatoms[NET_COUNT];
 static Desktop desktops[DESKTOPS];
 
@@ -317,9 +317,17 @@ void cleanup(void) {
     XQueryTree(dis, root, &root_return, &parent_return, &children, &nchildren);
     for (unsigned int i = 0; i < nchildren; i++) deletewindow(children[i]);
     if (children) XFree(children);
-    XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST]);
     XFreeCursor(dis, cur_norm);
     XFreeCursor(dis, cur_move);
+    XDeleteProperty(dis, root, netatoms[NET_SUPPORTED]);
+    XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST]);
+    XDeleteProperty(dis, root, netatoms[NET_NUMBER_OF_DESKTOPS]);
+    XDeleteProperty(dis, root, netatoms[NET_CURRENT_DESKTOP]);
+    XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
+    XDeleteProperty(dis, root, netatoms[NET_SUPPORTING_WM_CHECK]);
+    XDeleteProperty(dis, supportwin, netatoms[NET_SUPPORTING_WM_CHECK]);
+    XDeleteProperty(dis, supportwin, netatoms[NET_WM_NAME]);
+    XDestroyWindow(dis, supportwin);
     XSync(dis, False);
 }
 
@@ -1119,7 +1127,6 @@ void setnumberofdesktops(void) {
  */
 void setup(void) {
     XSetWindowAttributes wa;
-    Window win;
 
     sigchld(0);
 
@@ -1178,12 +1185,12 @@ void setup(void) {
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
 
     wa.override_redirect = True;
-    win = XCreateWindow(dis, root, -100, 0, 1, 1, 0, DefaultDepth(dis, screen), CopyFromParent,
+    supportwin = XCreateWindow(dis, root, -100, 0, 1, 1, 0, DefaultDepth(dis, screen), CopyFromParent,
             DefaultVisual(dis, screen), CWOverrideRedirect, &wa);
-    XChangeProperty(dis, win, netatoms[NET_WM_NAME], netatoms[UTF8_STRING], 8,
+    XChangeProperty(dis, supportwin, netatoms[NET_WM_NAME], netatoms[UTF8_STRING], 8,
             PropModeReplace, (unsigned char*)wmname, 12);
     XChangeProperty(dis, root, netatoms[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
-            PropModeReplace, (unsigned char*)&win, 1);
+            PropModeReplace, (unsigned char*)&supportwin, 1);
 
     setnumberofdesktops();
     setdesktopnames();
