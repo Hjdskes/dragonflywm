@@ -24,7 +24,6 @@
 #define BORDER_WIDTH    1         /* window border width */
 #define FOCUS           "#FF950E" /* focused window border color    */
 #define UNFOCUS         "#3F3F3F" /* unfocused window border color  */
-#define URGENT          "#DC322F" /* urgent window border color */
 #define MINWSZ          50        /* minimum window size in pixels  */
 #define DEFAULT_DESKTOP 0         /* the desktop to focus initially */
 #define DESKTOPS        4         /* number of desktops - edit DESKTOPCHANGE keys to suit */
@@ -41,10 +40,10 @@ static const char *desknames[] = { "Web", "Chat", "Term", "Work", NULL };
  * if desktop is negative, then current is assumed
  */
 static const AppRule rules[] = { \
-    /*  class          desktop  follow  float */
-    { "Firefox",          0,    False,  False },
-    { "MPlayer",          3,    True,   True  },
-    { "Gimp",             3,    False,  False },
+    /*  class     instance  title  desktop  follow  float */
+    { "Firefox",    NULL,   NULL,     0,    False,  False },
+    { "MPlayer",    NULL,   NULL,     3,    True,   True  },
+    { "Gimp",       NULL,   NULL,     3,    False,  False },
 };
 
 /* helper for spawning shell commands */

@@ -198,10 +198,6 @@ will be used by the master clients.
 Sets the number of clients that will be
 in the master area.
 .TP
-.B ATTACH_ASIDE
-Whether new clients should spawn as the master window
-or as the last stack window.
-.TP
 .B FOLLOW_MOUSE
 Whether to focus the window the mouse just entered.
 .TP
@@ -239,19 +235,23 @@ the mouse or the keyboard (e.g. when resizing the master area).
 Users can set
 .B rules
 on applications, by matching their
-.B class
+.B class name
+,
+.B instance name
 or
-.B instance
-name. The rules can specify on which
+.B window title.
+The rules can specify on which
 .B desktop
 the application should start (or
 .B -1
 to signify the current desktop), whether the
 .B focus
 should change to that desktop when the application starts
-and whether the application should start on
+, whether the application should start on
 .B floating
-or tiled mode.
+or tiled mode and if the application should
+.B attach aside
+(whether it should spawn as the master window or as the last stack window).
 .SH SEE ALSO
 .BR dmenu (1)
 .BR xterm (1)
