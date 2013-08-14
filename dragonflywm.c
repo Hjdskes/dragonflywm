@@ -302,6 +302,7 @@ void change_desktop(const Arg *arg) {
     if (d->curr) XUnmapWindow(dis, d->curr->win);
     XChangeWindowAttributes(dis, root, CWEventMask, &(XSetWindowAttributes){.event_mask = ROOTMASK});
     if (n->head) { tile(n); focus(n->curr, n); }
+    else focus(NULL, n);
     updatecurrentdesktop();
     desktopinfo();
 }
