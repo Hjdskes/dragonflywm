@@ -383,17 +383,19 @@ void client_to_desktop(const Arg *arg) {
  * on its desktop.
  */
 void clientmessage(XEvent *e) {
-    Desktop *d = NULL; Client *c = NULL;
-    if (!wintoclient(e->xclient.window, &c, &d)) return;
-
-
     if (e->xclient.message_type == netatoms[NET_WM_STATE]) {
         if ((unsigned)e->xclient.data.l[1] == netatoms[NET_WM_STATE_FULLSCREEN] || (unsigned)e->xclient.data.l[2] == netatoms[NET_WM_STATE_FULLSCREEN]) {
-            setfullscreen(c, d, (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isfull)));
-            if (!(c->isfloat || c->istrans) || !d->head->next) tile(d);
+            Desktop *d = NULL; Client *c = NULL;
+            if ((wintoclient(e->xclient.window, &c, &d))) {
+                setfullscreen(c, d, (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isfull)));
+                if (!(c->isfloat || c->istrans) || !d->head->next) tile(d);
+            }
         }
-    } else if (e->xclient.message_type == netatoms[NET_ACTIVE_WINDOW]) focus(c, d);
-    else if (e->xclient.message_type == netatoms[NET_CLOSE_WINDOW]) deletewindow(c->win);
+    } else if (e->xclient.message_type == netatoms[NET_ACTIVE_WINDOW]) {
+        Desktop *d = NULL; Client *c = NULL;
+        if (wintoclient(e->xclient.window, &c, &d))
+            focus(c, d);
+    } else if (e->xclient.message_type == netatoms[NET_CLOSE_WINDOW]) deletewindow(e->xclient.window);
     else if (e->xclient.message_type == netatoms[NET_CURRENT_DESKTOP])
         change_desktop(&(Arg){.i = e->xclient.data.l[0]});
 }
@@ -402,7 +404,7 @@ void clientmessage(XEvent *e) {
  * configure a window's size, position, border width, and stacking order.
  *
  * windows usually have a prefered size (width, height) and position (x, y),
- * and sometimes borer with (border_width) and stacking order (above, detail).
+ * and sometimes border width (border_width) and stacking order (above, detail).
  * a configure request attempts to reconfigure those properties for a window.
  *
  * we don't really care about those values, because a tiling wm will impose
