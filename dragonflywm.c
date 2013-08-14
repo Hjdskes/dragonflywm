@@ -322,7 +322,7 @@ void cleanup(void) {
     XFreeCursor(dis, cur_move);
     XDeleteProperty(dis, root, netatoms[NET_SUPPORTED]);
     XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST]);
-    /*XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING]);*/
+    XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING]);
     XDeleteProperty(dis, root, netatoms[NET_NUMBER_OF_DESKTOPS]);
     XDeleteProperty(dis, root, netatoms[NET_CURRENT_DESKTOP]);
     XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
@@ -803,8 +803,8 @@ void maprequest(XEvent *e) {
     else if (follow) change_desktop(&(Arg){.i = newdsk});
     XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST], XA_WINDOW, 32,
             PropModeAppend, (unsigned char *)&(c->win), 1);
-    /*XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING], XA_WINDOW, 32,
-            PropModeReplace, (unsigned char *)&(c->win), 1);*/
+    XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING], XA_WINDOW, 32,
+            PropModeAppend, (unsigned char *)&(c->win), 1);
     /*setclientstate(c, NormalState);*/
     updateclientdesktop(c);
     focus(c, d);
@@ -1182,7 +1182,7 @@ void setup(void) {
     netatoms[NET_SUPPORTING_WM_CHECK]  = XInternAtom(dis, "_NET_SUPPORTING_WM_CHECK",   False);
     netatoms[NET_WM_NAME]              = XInternAtom(dis, "_NET_WM_NAME",               False);
     netatoms[NET_CLIENT_LIST]          = XInternAtom(dis, "_NET_CLIENT_LIST",           False);
-    /*netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);*/
+    netatoms[NET_CLIENT_LIST_STACKING] = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",  False);
     netatoms[NET_NUMBER_OF_DESKTOPS]   = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",    False);
     netatoms[NET_CURRENT_DESKTOP]      = XInternAtom(dis, "_NET_CURRENT_DESKTOP",       False);
     netatoms[NET_DESKTOP_NAMES]        = XInternAtom(dis, "_NET_DESKTOP_NAMES",         False);
@@ -1364,8 +1364,8 @@ void togglepanel(void) {
 }
 
 /**
-  * sets what desktop a client is on for EWMH aware panels
-  */
+ * sets what desktop a client is on for EWMH aware panels
+ */
 void updateclientdesktop(Client *c) {
     XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
             PropModeReplace, (unsigned char *)&(c->desk), 1);
@@ -1378,13 +1378,15 @@ void updateclientlist(void) {
     Client *c;
     Desktop *d;
     XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST]);
-    /*XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING]);*/
-    for (unsigned int i = 0; i < DESKTOPS; i++)
-        for (d = &desktops[i], c = d->head; c; c = c->next)
+    XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING]);
+    for (unsigned int i = 0; i < DESKTOPS; i++) {
+        for (d = &desktops[i], c = d->head; c; c = c->next) {
             XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST], XA_WINDOW, 32,
                     PropModeAppend, (unsigned char *)&(c->win), 1);
-            /*XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING], XA_WINDOW, 32,
-                    PropModeReplace, (unsigned char *)&(c->win), 1);*/
+            XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING], XA_WINDOW, 32,
+                    PropModeAppend, (unsigned char *)&(c->win), 1);
+        }
+    }
 }
 
 /**
