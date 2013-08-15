@@ -163,7 +163,6 @@ static void cleanup(void);
 static void clientmessage(XEvent *e);
 static void configurerequest(XEvent *e);
 static void deletewindow(Window w);
-static void desktopinfo(void);
 static void destroynotify(XEvent *e);
 static void enternotify(XEvent *e);
 static void focus(Client *c, Desktop *d);
@@ -305,7 +304,6 @@ void change_desktop(const Arg *arg) {
     if (n->head) { tile(n); focus(n->curr, n); }
     else focus(NULL, n);
     updatecurrentdesktop();
-    desktopinfo();
 }
 
 /**
@@ -360,7 +358,7 @@ void client_to_desktop(const Arg *arg) {
     /* link client to new desktop and make it the current */
     focus(l ? (l->next = c):n->head ? (n->head->next = c):(n->head = c), n);
 
-    if (FOLLOW_WINDOW) change_desktop(arg); else desktopinfo();
+    if (FOLLOW_WINDOW) change_desktop(arg);
 
 }
 
@@ -449,33 +447,6 @@ void deletewindow(Window w) {
     ev.xclient.data.l[0]    = wmatoms[WM_DELETE_WINDOW];
     ev.xclient.data.l[1]    = CurrentTime;
     XSendEvent(dis, w, False, NoEventMask, &ev);
-}
-
-/**
- * output info about the desktops on standard output stream
- *
- * the information is formatted as a space separated line
- * where each token contains information about a desktop.
- * each token is a formatted as ':' separated string of values.
- * the values are:
- *   - the desktop number/id
- *   - the desktop's client count
- *   - the desktop's tiling layout mode/id
- *   - whether the desktop is the current focused (1) or not (0)
- *   - whether any client in that desktop has received an urgent hint
- *
- * once the info is collected, immediately flush the stream
- */
-void desktopinfo(void) {
-    Desktop *d = NULL;
-    Client *c = NULL;
-    Bool urgent = False;
-
-    for (int w = 0, i = 0; i < DESKTOPS; i++, w = 0, urgent = False) {
-        for (d = &desktops[i], c = d->head; c; urgent |= c->isurgn, ++w, c = c->next);
-        printf("%d:%d:%d:%d:%d%c", i, w, d->mode, i == currdeskidx, urgent, i == DESKTOPS-1 ? '\n':' ');
-    }
-    fflush(stdout);
 }
 
 /**
@@ -813,8 +784,6 @@ void maprequest(XEvent *e) {
     /*setclientstate(c, NormalState);*/
     updateclientdesktop(c);
     focus(c, d);
-
-    if (!follow) desktopinfo();
 }
 
 /**
@@ -1010,7 +979,6 @@ void propertynotify(XEvent *e) {
     XWMHints *wmh = XGetWMHints(dis, c->win);
     c->isurgn = (c != desktops[currdeskidx].curr && (wmh && (wmh->flags & XUrgencyHint)));
     if (wmh) XFree(wmh);
-    desktopinfo();
 }
 
 /**
@@ -1038,7 +1006,6 @@ void removeclient(Client *c, Desktop *d) {
     /*setclientstate(c, WithdrawnState);*/
     free(c);
     updateclientlist();
-    desktopinfo();
 }
 
 /**
@@ -1202,7 +1169,6 @@ void setup(void) {
     netatoms[NET_WM_WINDOW_TYPE_UTILITY] = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_UTILITY", False);
     netatoms[UTF8_STRING]                = XInternAtom(dis, "UTF8_STRING",                 False);
 
-    /* propagate EWMH support */
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
 
@@ -1338,7 +1304,6 @@ void switch_mode(const Arg *arg) {
     Desktop *d = &desktops[currdeskidx];
     if (d->mode != arg->i) d->mode = arg->i;
     if (d->head) { tile(d); focus(d->curr, d); }
-    desktopinfo();
 }
 
 /**
@@ -1456,7 +1421,6 @@ int main(int argc, char *argv[]) {
     else if (argc != 1) errx(EXIT_FAILURE, "usage: man dragonflywm");
     if (!(dis = XOpenDisplay(NULL))) errx(EXIT_FAILURE, "%s: cannot open display", wmname);
     setup();
-    desktopinfo(); /* zero out every desktop on (re)start */
     run();
     cleanup();
     XCloseDisplay(dis);
