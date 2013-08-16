@@ -256,7 +256,7 @@ static void (*layout[MODES])(int x, int y, int w, int h, const Desktop *d) = {
  */
 Client* addwindow(Window w, Desktop *d, Bool attachaside) {
     Client *c = NULL, *t = prevclient(d->head, d);
-    if (!(c = (Client *)calloc(1, sizeof(Client)))) err(EXIT_FAILURE, "cannot allocate client");
+    if (!(c = (Client *)calloc(1, sizeof(Client)))) err(EXIT_FAILURE, "%s: cannot allocate client", wmname);
     if (!d->head) d->head = c;
     else if (!attachaside) { c->next = d->head; d->head = c; }
     else if (t) t->next = c; else d->head->next = c;
@@ -738,7 +738,8 @@ void maprequest(XEvent *e) {
     Bool follow = False, floating = False, aside = False;
     int newdsk = currdeskidx;
 
-    XGetTextProperty(dis, w, &name, netatoms[NET_WM_NAME]);
+    if (!XGetTextProperty(dis, w, &name, netatoms[NET_WM_NAME]))
+        XGetTextProperty(dis, w, &name, XA_WM_NAME);
     XGetClassHint(dis, w, &ch);
 
     for (unsigned int i = 0; i < LENGTH(rules); i++)
@@ -1121,8 +1122,8 @@ void setup(void) {
     root = RootWindow(dis, screen);
 
     /* screen width and height */
-    ww = XDisplayWidth(dis,  screen);
-    wh = XDisplayHeight(dis, screen) - PANEL_HEIGHT;
+    ww = XDisplayWidth(dis,  screen) - (PANEL_HORIZ ? 0 : PANEL_HEIGHT);
+    wh = XDisplayHeight(dis, screen) - (PANEL_HORIZ ? PANEL_HEIGHT : 0);
 
     /* init cursors */
     cur_norm = XCreateFontCursor(dis, XC_left_ptr);

@@ -14,6 +14,7 @@
 #define MASTER_SIZE     0.70      /* size of the master area */
 #define NMASTER         1         /* number of windows in master area by default */
 #define SHOW_PANEL      True      /* show panel by default on exec */
+#define PANEL_HORIZ     True      /* True means panel is horizontal */
 #define TOP_PANEL       False     /* False means panel is on bottom */
 #define PANEL_HEIGHT    40        /* 0 for no space for panel, thus no panel */
 #define ATTACH_ASIDE    True      /* False means new window is master */
