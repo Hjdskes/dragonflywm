@@ -1,0 +1,29 @@
+to implement:
+  *net_wm_state_demands_attention for skype (qt in general) focusurgent
+  *nmaster
+
+bugs:
+  *setclientstate in unmapnotify makes Skype act wrong
+  *libreoffice splash crashes the wm
+  *net_wm_window_type_dock : tooltips appear behind clients. XRaiseWindow initially works. Something permanent?
+  *xkill : kills same instances -> related to setclientstate?
+  *panels do not see netwmdemandsattention urgent hints
+  *machinebacon: we open two frames, one gets focus, we click into the other one, it gets focus but doesn't receive input (the input goes to the previous frame). So one has to click into the anyway active frame, then into the other one, and then it works. 
+
+check / cleanup:
+  *cursors : wa.cursor instead of XDefineCursor. cur_res, as well?
+  *netclientlist : improve c->desk
+  *setdesktopnames : cleanup
+  *general code commenting and cleanup
+
+next release:
+  *move everything desktop into one big array?
+  *make client appear on all desktops
+  *minimizing/restoring clients
+  *give non-resizeable clients their own (requested) position
+      skype splash
+  *honor transient hints on e.g. about dialogs
+  *being able to focus the root window?
+      for e.g. right-click menus
+  *move applications around in panel
+  *look into why window rules behave differently from DWM
