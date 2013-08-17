@@ -99,7 +99,6 @@ static void move_up();
 static void moveresize(const Arg *arg);
 static void mousemotion(const Arg *arg);
 static void next_win();
-static void nmaster(const Arg *arg);
 static void prev_win();
 static void quit(const Arg *arg);
 static void resize_master(const Arg *arg);
@@ -146,11 +145,10 @@ typedef struct Client {
  * curr - the currently highlighted window
  * prev - the client that previously had focus
  * sbar - the visibility status of the panel/statusbar
- * nm   - the number of windows in master area
  * name - the name of the desktop
  */
 typedef struct {
-    int mode, masz, sasz, nm;
+    int mode, masz, sasz;
     Client *head, *curr, *prev;
     Bool sbar;
     const char *name;
@@ -661,11 +659,12 @@ void grid(int x, int y, int w, int h, const Desktop *d) {
     for (cols = 0; cols <= n/2; cols++) if (cols*cols >= n) break; /* emulate square root */
     if (n == 0) return; else if (n == 5) cols = 2;
 
-    int rows = n/cols, ch = h - BORDER_WIDTH, cw = (w - BORDER_WIDTH)/(cols ? cols:1);
+    int rows = n/cols, ch = h - USELESSGAP, cw = (w - USELESSGAP)/(cols ? cols:1);
     for (Client *c = d->head; c; c = c->next) {
         if (ISFFT(c)) continue; else ++i;
         if (i/rows + 1 > cols - n%cols) rows = n/cols + 1;
-        XMoveResizeWindow(dis, c->win, x + cn*cw, y + rn*ch/rows, cw - BORDER_WIDTH, ch/rows - BORDER_WIDTH);
+        XMoveResizeWindow(dis, c->win, x + cn*cw + USELESSGAP, y + rn*ch/rows + USELESSGAP,
+                cw - 2*BORDER_WIDTH - USELESSGAP, ch/rows - 2*BORDER_WIDTH - USELESSGAP);
         if (++rn >= rows) { rn = 0; cn++; }
     }
 }
@@ -943,15 +942,6 @@ void next_win(void) {
 }
 
 /**
- * increase or decrease the number
- * of windows in the master area
- */
-void nmaster(const Arg *arg) {
-    Desktop *d = &desktops[currdeskidx];
-    if ((d->nm += arg->i) >= 1) tile(d); else d->nm -= arg->i;
-}
-
-/**
  * get the previous client from the given
  * if no such client, return NULL
  */
@@ -1132,7 +1122,7 @@ void setup(void) {
 
     /* initialize each desktop */
     for (unsigned int d = 0; d < DESKTOPS; d++)
-        desktops[d] = (Desktop){ .name = desknames[d], .mode = initlayouts[d], .sbar = SHOW_PANEL, .nm = NMASTER };
+        desktops[d] = (Desktop){ .name = desknames[d], .mode = initlayouts[d], .sbar = SHOW_PANEL };
 
     /* get colors for client borders */
     win_focus = getcolor(FOCUS, screen);
@@ -1222,7 +1212,7 @@ void spawn(const Arg *arg) {
  */
 void stack(int x, int y, int w, int h, const Desktop *d) {
     Client *c = NULL, *t = NULL; Bool b = (d->mode == BSTACK);
-    int n = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * MASTER_SIZE + d->masz, nm = d->nm;
+    int n = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * MASTER_SIZE + d->masz;
 
     /* count stack windows and grab first non-floating, non-fullscreen window */
     for (t = d->head; t; t = t->next) if (!ISFFT(t)) { if (c) ++n; else c = t; }
@@ -1257,23 +1247,22 @@ void stack(int x, int y, int w, int h, const Desktop *d) {
      * and also, does not result in gaps created on the bottom of the screen.
      */
     if (c && !n) XMoveResizeWindow(dis, c->win, x, y, w - 2*BORDER_WIDTH, h - 2*BORDER_WIDTH);
-    if (!c || !n) return; else if (n - nm <= 0) nm = n;
-    else { p = (z - d->sasz)%((n -= nm-1)) + d->sasz; z = (z - d->sasz)/n; }
+    if (!c || !n) return; else if (n > 1) { p = (z - d->sasz)%n + d->sasz; z = (z - d->sasz)/n; }
 
-    /* tile non-floating, non-fullscreen master windows to equally share the master area */
-    for (int i = 0; i < nm; i++) {
-        if (b) XMoveResizeWindow(dis, c->win, x + i * w/nm, y, w/nm - 2*BORDER_WIDTH, ma - BORDER_WIDTH);
-        else   XMoveResizeWindow(dis, c->win, x, y + i * h/nm, ma - BORDER_WIDTH, h/nm - 2*BORDER_WIDTH);
-        for (c = c->next; c && ISFFT(c); c = c->next);
-    }
+    /* tile the first non-floating, non-fullscreen window to cover the master area */
+    if (b) XMoveResizeWindow(dis, c->win, x + USELESSGAP, y + USELESSGAP,
+            w - 2*(BORDER_WIDTH + USELESSGAP), ma - 2*(BORDER_WIDTH + USELESSGAP));
+    else   XMoveResizeWindow(dis, c->win, x + USELESSGAP, y + USELESSGAP,
+            ma - 2*(BORDER_WIDTH + USELESSGAP), h - 2*(BORDER_WIDTH + USELESSGAP));
 
     /* tile the next non-floating, non-fullscreen (and first) stack window adding p */
-    int cw = (b ? h:w) - 2*BORDER_WIDTH - ma, ch = z - BORDER_WIDTH;
-    if (b) XMoveResizeWindow(dis, c->win, x, y += ma, ch - BORDER_WIDTH + p, cw);
-    else   XMoveResizeWindow(dis, c->win, x += ma, y, cw, ch - BORDER_WIDTH + p);
+    for (c = c->next; c && ISFFT(c); c = c->next);
+    int ch = z - 2*BORDER_WIDTH - USELESSGAP, cw = (b ? h:w) - 2*BORDER_WIDTH - ma - USELESSGAP;
+    if (b) XMoveResizeWindow(dis, c->win, x += USELESSGAP, y += ma, ch - USELESSGAP + p, cw);
+    else   XMoveResizeWindow(dis, c->win, x += ma, y += USELESSGAP, cw, ch - USELESSGAP + p);
 
     /* tile the rest of the non-floating, non-fullscreen stack windows */
-    for (b ? (x += ch+p):(y += ch+p), c = c->next; c; c = c->next) {
+    for (b ? (x += z+p-USELESSGAP):(y += z+p-USELESSGAP), c = c->next; c; c = c->next) {
         if (ISFFT(c)) continue;
         if (b) { XMoveResizeWindow(dis, c->win, x, y, ch, cw); x += z; }
         else   { XMoveResizeWindow(dis, c->win, x, y, cw, ch); y += z; }

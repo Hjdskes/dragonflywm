@@ -12,7 +12,7 @@
 
 /** generic settings **/
 #define MASTER_SIZE     0.70      /* size of the master area */
-#define NMASTER         1         /* number of windows in master area by default */
+#define USELESSGAP      4         /* the size of the useless gap in pixels */ 
 #define SHOW_PANEL      True      /* show panel by default on exec */
 #define PANEL_HORIZ     True      /* True means panel is horizontal */
 #define TOP_PANEL       False     /* False means panel is on bottom */
@@ -28,7 +28,6 @@
 #define MINWSZ          50        /* minimum window size in pixels  */
 #define DEFAULT_DESKTOP 0         /* the desktop to focus initially */
 #define DESKTOPS        4         /* number of desktops - edit DESKTOPCHANGE keys to suit */
-
 
 /**
  * layouts and names for each desktop
@@ -77,8 +76,6 @@ static Key keys[] = {
     {  MOD1,             XK_k,             prev_win,       {NULL}},
     {  MOD1,             XK_Down,          move_down,      {NULL}},
     {  MOD1,             XK_Up,            move_up,        {NULL}},
-    {  MOD1,             XK_minus,         nmaster,        {.i = -1}},
-    {  MOD1,             XK_equal,         nmaster,        {.i = +1}},
     {  MOD1,             XK_bracketleft,   resize_master,  {.i = -10}}, /* decrease size in px */
     {  MOD1,             XK_bracketright,  resize_master,  {.i = +10}}, /* increase size in px */
     {  MOD1|SHIFT,       XK_bracketleft,   resize_stack,   {.i = -10}}, /* shrink   size in px */
