@@ -208,7 +208,7 @@ static int xerrorstart(Display *dis, XErrorEvent *ee);
  */
 static Bool running = True;
 static int wh, ww, currdeskidx, prevdeskidx, retval;
-static unsigned int numlockmask, win_unfocus, win_focus, cur_norm, cur_move;
+static unsigned int numlockmask, win_unfocus, win_focus, cur_norm, cur_move, cur_res;
 static const char wmname[12] = "DragonflyWM";
 static Display *dis;
 static Window root, supportwin;
@@ -318,6 +318,7 @@ void cleanup(void) {
     if (children) XFree(children);
     XFreeCursor(dis, cur_norm);
     XFreeCursor(dis, cur_move);
+    XFreeCursor(dis, cur_res);
     XUndefineCursor(dis, root);
     XDeleteProperty(dis, root, netatoms[NET_SUPPORTED]);
     XDeleteProperty(dis, root, netatoms[NET_CLIENT_LIST]);
@@ -812,8 +813,13 @@ void mousemotion(const Arg *arg) {
     int rx, ry, c, xw, yh; unsigned int v; Window w;
     if (!XQueryPointer(dis, root, &w, &w, &rx, &ry, &c, &c, &v) || w != d->curr->win) return;
 
-    if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
-            GrabModeAsync, None, cur_move, CurrentTime) != GrabSuccess) return;
+    if (arg->i == RESIZE) {
+        if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
+                GrabModeAsync, None, cur_res, CurrentTime) != GrabSuccess) return;
+    } else if (arg->i == MOVE) {
+        if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
+                GrabModeAsync, None, cur_move, CurrentTime) != GrabSuccess) return;
+    }
 
     if (!d->curr->isfloat && !d->curr->istrans) { d->curr->isfloat = True; tile(d); focus(d->curr, d); }
 
@@ -1117,6 +1123,7 @@ void setup(void) {
     /* init cursors */
     cur_norm = XCreateFontCursor(dis, XC_left_ptr);
     cur_move = XCreateFontCursor(dis, XC_fleur);
+    cur_res = XCreateFontCursor(dis, XC_sizing);
     XDefineCursor(dis, root, cur_norm);
 
     /* initialize each desktop */

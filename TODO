@@ -9,7 +9,7 @@ bugs:
   *machinebacon: we open two frames, one gets focus, we click into the other one, it gets focus but doesn't receive input (the input goes to the previous frame). So one has to click into the anyway active frame, then into the other one, and then it works. 
 
 check / cleanup:
-  *cursors : wa.cursor instead of XDefineCursor. cur_res, as well?
+  *cursors : wa.cursor instead of XDefineCursor
   *netclientlist : improve c->desk
   *setdesktopnames : cleanup
   *general code commenting and cleanup
