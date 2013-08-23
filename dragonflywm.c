@@ -270,10 +270,9 @@ Client* addwindow(Window w, Desktop *d, Bool attachaside) {
  */
 void buttonpress(XEvent *e) {
     Desktop *d = NULL; Client *c = NULL;
-    Bool w = wintoclient(e->xbutton.window, &c, &d);
     unsigned int click = ROOTWIN;
 
-    if (w && CLICK_TO_FOCUS && c != d->curr && e->xbutton.button == FOCUS_BUTTON) { focus(c, d); click = CLIENTWIN; }
+    if (wintoclient(e->xbutton.window, &c, &d)) { focus(c, d); click = CLIENTWIN; }
 
     for (unsigned int i = 0; i < LENGTH(buttons); i++)
         if (click == buttons[i].click && CLEANMASK(buttons[i].mask) == CLEANMASK(e->xbutton.state) &&
@@ -566,7 +565,7 @@ void focus(Client *c, Desktop *d) {
         XSetWindowBorderWidth(dis, c->win, c->isfull || (!ISFFT(c) &&
                 (d->mode == MONOCLE || !d->head->next)) ? 0:BORDER_WIDTH);
         if (c != d->curr) w[c->isfull ? --fl:ISFFT(c) ? --ft:--n] = c->win;
-        if (CLICK_TO_FOCUS || c == d->curr) grabbuttons(c);
+        if (c == d->curr) grabbuttons(c);
     }
     XRestackWindows(dis, w, LENGTH(w));
 
@@ -625,14 +624,16 @@ unsigned long getcolor(const char* color, const int screen) {
 void grabbuttons(Client *c) {
     unsigned int b, m, modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
 
-    for (m = 0; CLICK_TO_FOCUS && m < LENGTH(modifiers); m++)
+    /*for (m = 0; m < LENGTH(modifiers); m++)
         if (c != desktops[currdeskidx].curr) XGrabButton(dis, FOCUS_BUTTON, modifiers[m],
                 c->win, False, BUTTONMASK, GrabModeAsync, GrabModeAsync, None, None);
-        else XUngrabButton(dis, FOCUS_BUTTON, modifiers[m], c->win);
+        else XUngrabButton(dis, FOCUS_BUTTON, modifiers[m], c->win);*/
 
-    for (b = 0, m = 0; b < LENGTH(buttons); b++, m = 0) while (m < LENGTH(modifiers))
-        XGrabButton(dis, buttons[b].button, buttons[b].mask|modifiers[m++], c->win,
-                      False, BUTTONMASK, GrabModeAsync, GrabModeAsync, None, None);
+    for (b = 0, m = 0; b < LENGTH(buttons); b++, m = 0)
+        if (buttons[b].click == CLIENTWIN)
+            while (m < LENGTH(modifiers))
+                XGrabButton(dis, buttons[b].button, buttons[b].mask|modifiers[m++], c->win,
+                        False, BUTTONMASK, GrabModeAsync, GrabModeAsync, None, None);
 }
 
 /**
