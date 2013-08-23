@@ -809,17 +809,17 @@ void mousemotion(const Arg *arg) {
 
     if (!d->curr || !XGetWindowAttributes(dis, d->curr->win, &wa)) return;
 
-    if (arg->i == RESIZE) XWarpPointer(dis, d->curr->win, d->curr->win, 0, 0, 0, 0, --wa.width, --wa.height);
-    int rx, ry, c, xw, yh; unsigned int v; Window w;
-    if (!XQueryPointer(dis, root, &w, &w, &rx, &ry, &c, &c, &v) || w != d->curr->win) return;
-
     if (arg->i == RESIZE) {
+        XWarpPointer(dis, d->curr->win, d->curr->win, 0, 0, 0, 0, --wa.width, --wa.height);
         if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
                 GrabModeAsync, None, cur_res, CurrentTime) != GrabSuccess) return;
     } else if (arg->i == MOVE) {
         if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
                 GrabModeAsync, None, cur_move, CurrentTime) != GrabSuccess) return;
     }
+
+    int rx, ry, c, xw, yh; unsigned int v; Window w;
+    if (!XQueryPointer(dis, root, &w, &w, &rx, &ry, &c, &c, &v) || w != d->curr->win) return;
 
     if (!d->curr->isfloat && !d->curr->istrans) { d->curr->isfloat = True; tile(d); focus(d->curr, d); }
 
