@@ -21,6 +21,7 @@
 #define ROOTMASK        SubstructureRedirectMask|ButtonPressMask|SubstructureNotifyMask|PropertyChangeMask
 
 enum { RESIZE, MOVE };
+enum { CLIENTWIN, ROOTWIN };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_COUNT };
 enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
@@ -66,7 +67,7 @@ typedef struct {
  * arg    - the argument to the function
  */
 typedef struct {
-    unsigned int mask, button;
+    unsigned int click, mask, button;
     void (*func)(const Arg *);
     const Arg arg;
 } Button;
@@ -270,11 +271,12 @@ Client* addwindow(Window w, Desktop *d, Bool attachaside) {
 void buttonpress(XEvent *e) {
     Desktop *d = NULL; Client *c = NULL;
     Bool w = wintoclient(e->xbutton.window, &c, &d);
+    unsigned int click = ROOTWIN;
 
-    if (w && CLICK_TO_FOCUS && c != d->curr && e->xbutton.button == FOCUS_BUTTON) focus(c, d);
+    if (w && CLICK_TO_FOCUS && c != d->curr && e->xbutton.button == FOCUS_BUTTON) { focus(c, d); click = CLIENTWIN; }
 
     for (unsigned int i = 0; i < LENGTH(buttons); i++)
-        if (CLEANMASK(buttons[i].mask) == CLEANMASK(e->xbutton.state) &&
+        if (click == buttons[i].click && CLEANMASK(buttons[i].mask) == CLEANMASK(e->xbutton.state) &&
             buttons[i].func && buttons[i].button == e->xbutton.button) {
             if (c && d->curr != c) focus(c, d);
             buttons[i].func(&(buttons[i].arg));
@@ -528,6 +530,7 @@ void focus(Client *c, Desktop *d) {
      * should and are handled here.
      */
     if (!d->head || !c) { /* no clients - no active window - nothing to do */
+        XSetInputFocus(dis, root, RevertToPointerRoot, CurrentTime);
         XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
         d->curr = d->prev = NULL;
         return;
@@ -814,7 +817,7 @@ void mousemotion(const Arg *arg) {
     if (!XQueryPointer(dis, root, &w, &w, &rx, &ry, &c, &c, &v) || w != d->curr->win) return;
 
     if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
-                     GrabModeAsync, None, cur_move, CurrentTime) != GrabSuccess) return;
+            GrabModeAsync, None, cur_move, CurrentTime) != GrabSuccess) return;
 
     if (!d->curr->isfloat && !d->curr->istrans) { d->curr->isfloat = True; tile(d); focus(d->curr, d); }
 

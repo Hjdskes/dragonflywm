@@ -111,9 +111,10 @@ static Key keys[] = {
  * mouse shortcuts
  */
 static Button buttons[] = {
-    {  MOD1,    Button1,     mousemotion,   {.i = MOVE}},
-    {  MOD1,    Button2,     togglefloat,   {0}},
-    {  MOD1,    Button3,     mousemotion,   {.i = RESIZE}},
+    {  ROOTWIN,   0,       Button3,     spawn,         {.com = menu}},
+    {  CLIENTWIN, MOD1,    Button1,     mousemotion,   {.i = MOVE}},
+    {  CLIENTWIN, MOD1,    Button2,     togglefloat,   {0}},
+    {  CLIENTWIN, MOD1,    Button3,     mousemotion,   {.i = RESIZE}},
 };
 #endif
 

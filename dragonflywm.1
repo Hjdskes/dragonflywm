@@ -170,15 +170,19 @@ the new desktop the window moved to.
 .B Mod1\-Shift\-F{1..n}
 Move focused window to nth workspace.
 .P
-The default mouse-bindings include:
+Mouse bindings work either with the root window or a client window. This enables the use for right-click menus, for example. The default mouse bindings include:
 .TP
-.B Mod1\-Button1
+.B Button3 - on the root window
+Start
+.BR dmenu (1).
+.TP
+.B Mod1\-Button1 - on the client window
 Dragging the mouse will move the selected window.
 .TP
-.B Mod1\-Button2
+.B Mod1\-Button2 - on the client window
 Toggles the selected client floating.
 .TP
-.B Mod1\-Button3
+.B Mod1\-Button3 - on the client window
 Dragging the mouse will resize the selected window.
 .SS Customization
 .I DragonflyWM

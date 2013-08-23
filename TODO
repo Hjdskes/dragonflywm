@@ -13,6 +13,7 @@ check / cleanup:
   *netclientlist : improve c->desk
   *setdesktopnames : cleanup
   *general code commenting and cleanup
+  *more calls to change clientstate?
 
 next release:
   *move everything desktop into one big array?
@@ -21,7 +22,5 @@ next release:
   *give non-resizeable clients their own (requested) position
       skype splash
   *honor transient hints on e.g. about dialogs
-  *being able to focus the root window?
-      for e.g. right-click menus
   *move applications around in panel
   *look into why window rules behave differently from DWM
