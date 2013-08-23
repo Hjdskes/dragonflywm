@@ -624,11 +624,6 @@ unsigned long getcolor(const char* color, const int screen) {
 void grabbuttons(Client *c) {
     unsigned int b, m, modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
 
-    /*for (m = 0; m < LENGTH(modifiers); m++)
-        if (c != desktops[currdeskidx].curr) XGrabButton(dis, FOCUS_BUTTON, modifiers[m],
-                c->win, False, BUTTONMASK, GrabModeAsync, GrabModeAsync, None, None);
-        else XUngrabButton(dis, FOCUS_BUTTON, modifiers[m], c->win);*/
-
     for (b = 0, m = 0; b < LENGTH(buttons); b++, m = 0)
         if (buttons[b].click == CLIENTWIN)
             while (m < LENGTH(modifiers))
