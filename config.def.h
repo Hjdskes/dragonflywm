@@ -5,33 +5,35 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define MOD1            Mod1Mask
-#define MOD4            Mod4Mask
-#define CONTROL         ControlMask
-#define SHIFT           ShiftMask
+#define MOD1    Mod1Mask
+#define MOD4    Mod4Mask
+#define CONTROL ControlMask
+#define SHIFT   ShiftMask
 
 /** generic settings **/
-#define MASTER_SIZE     0.70      /* size of the master area */
-#define USELESSGAP      4         /* the size of the useless gap in pixels */ 
-#define SHOW_PANEL      True      /* show panel by default on exec */
-#define PANEL_HORIZ     True      /* True means panel is horizontal */
-#define TOP_PANEL       False     /* False means panel is on bottom */
-#define PANEL_HEIGHT    40        /* 0 for no space for panel, thus no panel */
-#define ATTACH_ASIDE    True      /* False means new window is master */
-#define FOLLOW_WINDOW   False     /* follow the window when moved to a different desktop */
-#define FOLLOW_MOUSE    True      /* focus the window the mouse just entered */
-#define BORDER_WIDTH    1         /* window border width */
-#define FOCUS           "#FF950E" /* focused window border color    */
-#define UNFOCUS         "#3F3F3F" /* unfocused window border color  */
-#define MINWSZ          50        /* minimum window size in pixels  */
-#define DEFAULT_DESKTOP 0         /* the desktop to focus initially */
-#define DESKTOPS        4         /* number of desktops - edit DESKTOPCHANGE keys to suit */
+static const Bool panelhoriz          = True;      /* True means panel is horizontal */
+static const Bool toppanel            = False;     /* False means panel is on bottom */
+static const unsigned int panelheight = 38;        /* 0 for no space for panel, thus no panel */
+static const char focuscolor[]        = "#FF950E"; /* focused window border color */
+static const char unfocuscolor[]      = "#3F3F3F"; /* unfocused window border color */
+static const unsigned int borderwidth = 1;         /* window border width */
+static const unsigned int uselessgap  = 2;         /* the size of the useless gap in pixels */
+static const float mfact              = 0.70;      /* size of the master area */
+static const Bool follow_window       = False;     /* follow the window when moved to a different desktop */
+static const Bool follow_mouse        = True;      /* focus the window the mouse just entered */
+static const int minwsz               = 50;        /* minimum window size in pixels */
+static const int default_desktop      = 0;         /* the desktop to focus initially */
 
 /**
- * layouts and names for each desktop
+ * settings for each desktop
  */
-static const int initlayouts[] = { TILE, TILE, TILE, MONOCLE };
-static const char *desknames[] = { "Web", "Chat", "Term", "Work", NULL };
+static const DeskSettings desksettings[] = { \
+    /* name    layout   show panel */
+    { "Web",   TILE,    True },
+    { "Chill", TILE,    True },
+    { "Term",  TILE,    True },
+    { "Work",  MONOCLE, True },
+};
 
 /**
  * open applications to specified desktop with specified mode.

@@ -2,7 +2,7 @@
 .SH NAME
 DragonflyWM \- a nimble, fast and modern tiling window manager
 .SH SYNOPSIS
-.B DragonflyWM
+.B dragonflywm
 .RB [ \-v ]
 .SH DESCRIPTION
 .I DragonflyWM
@@ -46,17 +46,17 @@ The available settings in
 .I config.h
 for the panel, are:
 .TP
-.B SHOW_PANEL
+.B showpanel
 Whether
 .I DragonflyWM
 should reserve space for a panel.
 .TP
-.B PANEL_HEIGHT
+.B panelheight
 How much space should be reserved for the panel. Set to
 .B 0
 to disable the panel completely.
 .TP
-.B TOP_PANEL
+.B toppanel
 Whether the panel should be on the top or on the bottom of the screen.
 .SS Keyboard and mouse commands
 All of
@@ -161,7 +161,7 @@ Move to the nth desktop. By default,
 .I DragonflyWM
 is configured with four desktops.
 The setting
-.B FOLLOW_WINDOW
+.B follow_window
 in
 .I config.h
 defines whether the focus should be moved to
@@ -194,35 +194,26 @@ and (re)compiling the source code.
 .P
 Settings other than the above covered include:
 .TP
-.B MASTER_SIZE
+.B mfact
 Set the size of the master area that
 will be used by the master clients.
 .TP
-.B FOLLOW_MOUSE
+.B follow_mouse
 Whether to focus the window the mouse just entered.
 .TP
-.B FOLLOW_WINDOW
+.B follow_window
 Whether to follow the window to the new desktop it moved to.
 .TP
-.B BORDER_WIDTH
+.B borderwidth
 The width of the borders the clients have.
 .TP
-.B FOCUS / UNFOCUS
+.B focuscolor / unfocuscolor
 The colors for the borders of focused and unfocused windows.
 .TP
-.B DESKTOPS
-The number of desktops to use.
-.TP
-.B DEFAULT_DESKTOP
+.B default_desktop
 Which desktop to focus by default.
 .TP
-.B initlayouts
-The initial layout for each desktop.
-.TP
-.B desknames
-The (EWMH) name for each desktop.
-.TP
-.B MINWSZ
+.B minwsz
 The minimum window size allowed. Prevents over-resizing with
 the mouse or the keyboard (e.g. when resizing the master area).
 .P
