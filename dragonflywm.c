@@ -93,6 +93,7 @@ typedef struct {
 typedef struct {
     const char *name;
     const int mode;
+    float mfact;
     Bool sbar;
 } DeskSettings;
 
@@ -158,6 +159,7 @@ typedef struct Client {
 typedef struct {
     int mode, masz, sasz;
     Client *head, *curr, *prev;
+    float mfact;
     Bool sbar;
     const char *name;
 } Desktop;
@@ -1018,7 +1020,7 @@ void removeclient(Client *c, Desktop *d) {
  */
 void resize_master(const Arg *arg) {
     Desktop *d = &desktops[currdeskidx];
-    int msz = (d->mode == BSTACK ? wh:ww) * mfact + (d->masz += arg->i);
+    int msz = (d->mode == BSTACK ? wh:ww) * d->mfact + (d->masz += arg->i);
     if (msz >= minwsz && (d->mode == BSTACK ? wh:ww) - msz >= minwsz) tile(d);
     else d->masz -= arg->i; /* reset master area size */
 }
@@ -1134,7 +1136,8 @@ void setup(void) {
 
     /* initialize each desktop */
     for (unsigned int d = 0; d < DESKTOPS; d++)
-        desktops[d] = (Desktop){ .name = desksettings[d].name, .mode = desksettings[d].mode, .sbar = desksettings[d].sbar };
+        desktops[d] = (Desktop){ .name = desksettings[d].name, .mode = desksettings[d].mode,
+                .mfact = desksettings[d].mfact, .sbar = desksettings[d].sbar };
 
     /* get colors for client borders */
     win_focus = getcolor(focuscolor, screen);
@@ -1224,7 +1227,7 @@ void spawn(const Arg *arg) {
  */
 void stack(int x, int y, int w, int h, const Desktop *d) {
     Client *c = NULL, *t = NULL; Bool b = (d->mode == BSTACK);
-    int n = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * mfact + d->masz;
+    int n = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * d->mfact + d->masz;
 
     /* count stack windows and grab first non-floating, non-fullscreen window */
     for (t = d->head; t; t = t->next) if (!ISFFT(t)) { if (c) ++n; else c = t; }

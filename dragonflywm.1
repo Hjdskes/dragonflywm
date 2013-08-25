@@ -6,7 +6,16 @@ DragonflyWM \- a nimble, fast and modern tiling window manager
 .RB [ \-v ]
 .SH DESCRIPTION
 .I DragonflyWM
-is a nimble, fast and modern tiling window manager for X, based on MonsterWM. Its goal is to be (somewhat) EWMH compliant and thus to deliver you with a modern tiling environment.
+is a nimble, fast and modern tiling window manager for X, based on
+.BR MonsterWM.
+Its goal is to be (somewhat) EWMH compliant and thus to deliver you with a modern tiling environment. Currently,
+.I DragonflyWM
+supports third party panels, pagers and window switchers. Some of this is rudimentary, but as the project matures support will be improved.
+.P
+.SH OPTIONS
+.TP
+.B \-v
+Prints the version information to standard output, then exits.
 .P
 .SH MODES
 .I DragonflyWM
@@ -32,32 +41,91 @@ All clients take up the entire available screen space. Other clients are hidden 
 .B Floating mode
 Clients can be moved and resized freely around the screen, like a stacking
 window manager.
-.SH OPTIONS
-.TP
-.B \-v
-Prints the version information to standard output, then exits.
-.SH USAGE
-.SS Panels
-.P
+.SH CONFIGURATION
 .I DragonflyWM
-is compatible with third party panels such as tint2.
-.P
-The available settings in
+is configured by copying
+.I config.def.h
+to
 .I config.h
-for the panel, are:
+and (re)compiling the source code.
+Settings include:
 .TP
-.B showpanel
-Whether
-.I DragonflyWM
-should reserve space for a panel.
+.B panelhoriz
+Whether the panel is horizontal or vertical.
+.TP
+.B toppanel
+Whether the panel should be on the top or on bottom of the screen.
 .TP
 .B panelheight
 How much space should be reserved for the panel. Set to
 .B 0
 to disable the panel completely.
 .TP
-.B toppanel
-Whether the panel should be on the top or on the bottom of the screen.
+.B focuscolor / unfocuscolor
+The colors for the borders of focused and unfocused windows.
+.TP
+.B borderwidth
+The width of the borders the clients have. Set to
+.B 0
+to disable borders.
+.TP
+.B uselessgap
+The width of the gaps between clients. Set to
+.B 0
+to disable gaps.
+.TP
+.B follow_window
+Whether to follow the window to the new desktop it moved to.
+.TP
+.B follow_mouse
+Whether to focus the window the mouse just entered.
+.TP
+.B minwsz
+The minimum window size allowed. Prevents over-resizing with
+the mouse or the keyboard (e.g. when resizing the master area).
+.TP
+.B default_desktop
+Which desktop to focus by default.
+.P
+Virtual desktops can be configured in the
+.B DeskSettings
+array. The following options can be set:
+.TP
+.B Name
+The (EWMH) name of the desktop.
+.TP
+.B Layout
+The tiling layout to use. For supported layouts, see the
+.I MODES
+up in this manpage.
+.TP
+.B Mfact
+Set the size of the master area that will be used by the master window.
+.TP
+.B Show panel
+Whether this desktop should reserve space for a panel.
+.P
+Users can set
+.B rules
+on applications, by matching their
+.B class name
+,
+.B instance name
+or
+.B window title.
+The rules can specify on which
+.B desktop
+the application should start (or
+.B -1
+to signify the current desktop), whether the
+.B focus
+should change to that desktop when the application starts
+, whether the application should start on
+.B floating
+or tiled mode and if the application should
+.B attach aside
+(whether it should spawn as the master window or as the last stack window).
+.SH USAGE
 .SS Keyboard and mouse commands
 All of
 .I DragonflyWM's
@@ -184,60 +252,8 @@ Toggles the selected client floating.
 .TP
 .B Mod1\-Button3 - on the client window
 Dragging the mouse will resize the selected window.
-.SS Customization
-.I DragonflyWM
-is customized by copying
-.I config.def.h
-to
-.I config.h
-and (re)compiling the source code.
-.P
-Settings other than the above covered include:
-.TP
-.B mfact
-Set the size of the master area that
-will be used by the master clients.
-.TP
-.B follow_mouse
-Whether to focus the window the mouse just entered.
-.TP
-.B follow_window
-Whether to follow the window to the new desktop it moved to.
-.TP
-.B borderwidth
-The width of the borders the clients have.
-.TP
-.B focuscolor / unfocuscolor
-The colors for the borders of focused and unfocused windows.
-.TP
-.B default_desktop
-Which desktop to focus by default.
-.TP
-.B minwsz
-The minimum window size allowed. Prevents over-resizing with
-the mouse or the keyboard (e.g. when resizing the master area).
-.P
-Users can set
-.B rules
-on applications, by matching their
-.B class name
-,
-.B instance name
-or
-.B window title.
-The rules can specify on which
-.B desktop
-the application should start (or
-.B -1
-to signify the current desktop), whether the
-.B focus
-should change to that desktop when the application starts
-, whether the application should start on
-.B floating
-or tiled mode and if the application should
-.B attach aside
-(whether it should spawn as the master window or as the last stack window).
 .SH SEE ALSO
+.BR monsterwm
 .BR dmenu (1)
 .BR xterm (1)
 .SH BUGS
@@ -245,5 +261,3 @@ or tiled mode and if the application should
 is under active development. Please report all bugs to the author.
 .SH AUTHOR
 Jente Hidskes <jthidskes at outlook dot com>
-
-

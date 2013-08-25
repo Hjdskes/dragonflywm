@@ -10,7 +10,7 @@
 #define CONTROL ControlMask
 #define SHIFT   ShiftMask
 
-/** generic settings **/
+/* generic settings */
 static const Bool panelhoriz          = True;      /* True means panel is horizontal */
 static const Bool toppanel            = False;     /* False means panel is on bottom */
 static const unsigned int panelheight = 38;        /* 0 for no space for panel, thus no panel */
@@ -18,21 +18,18 @@ static const char focuscolor[]        = "#FF950E"; /* focused window border colo
 static const char unfocuscolor[]      = "#3F3F3F"; /* unfocused window border color */
 static const unsigned int borderwidth = 1;         /* window border width */
 static const unsigned int uselessgap  = 2;         /* the size of the useless gap in pixels */
-static const float mfact              = 0.70;      /* size of the master area */
 static const Bool follow_window       = False;     /* follow the window when moved to a different desktop */
 static const Bool follow_mouse        = True;      /* focus the window the mouse just entered */
 static const int minwsz               = 50;        /* minimum window size in pixels */
 static const int default_desktop      = 0;         /* the desktop to focus initially */
 
-/**
- * settings for each desktop
- */
+/* settings for each desktop */
 static const DeskSettings desksettings[] = { \
-    /* name    layout   show panel */
-    { "Web",   TILE,    True },
-    { "Chill", TILE,    True },
-    { "Term",  TILE,    True },
-    { "Work",  MONOCLE, True },
+    /* name    layout   mfact show panel */
+    { "Web",   TILE,    0.70, True },
+    { "Chill", TILE,    0.70, True },
+    { "Term",  TILE,    0.70, True },
+    { "Work",  MONOCLE, 0.70, True },
 };
 
 /**
@@ -40,7 +37,7 @@ static const DeskSettings desksettings[] = { \
  * if desktop is negative, then current is assumed
  */
 static const AppRule rules[] = { \
-    /*  class     instance  title  desktop  follow  float */
+    /* class      instance  title  desktop  follow  float */
     { "Firefox",    NULL,   NULL,     0,    False,  False },
     { "MPlayer",    NULL,   NULL,     3,    True,   True  },
     { "Gimp",       NULL,   NULL,     3,    False,  False },
@@ -49,9 +46,7 @@ static const AppRule rules[] = { \
 /* helper for spawning shell commands */
 #define SHCMD(cmd) {.com = (const char*[]){"/bin/sh", "-c", cmd, NULL}}
 
-/**
- * custom commands
- */
+/* custom commands */
 static const char *menu[]    = { "dmenu_run", "-f", "-p", "Run:", NULL };
 static const char *term[]    = { "xterm", NULL };
 static const char *browser[] = { "firefox", NULL };
@@ -60,9 +55,7 @@ static const char *browser[] = { "firefox", NULL };
     {  MOD1,             K,              change_desktop, {.i = N}}, \
     {  MOD1|ShiftMask,   K,              client_to_desktop, {.i = N}},
 
-/**
- * keyboard shortcuts
- */
+/* keyboard shortcuts */
 static Key keys[] = {
     /* modifier          key               function        argument */
     {  MOD1|CONTROL,     XK_r,             quit,           {.i = 0}}, /* quit with exit value 0 */
@@ -107,9 +100,7 @@ static Key keys[] = {
        DESKTOPCHANGE(    XK_F4,                             3)
 };
 
-/**
- * mouse shortcuts
- */
+/* mouse shortcuts */
 static Button buttons[] = {
     {  ROOTWIN,   0,       Button3,     spawn,         {.com = menu}},
     {  CLIENTWIN, MOD1,    Button1,     mousemotion,   {.i = MOVE}},
