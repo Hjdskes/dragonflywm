@@ -13,8 +13,9 @@ Installation
 In order to build DragonflyWM you need the Xlib header files.
 
 DragonflyWM is configured through config.h, so edit this first.
-Afterwards enter the following command to build and install:
+Afterwards enter the following commands to build and install:
 
+	$ make
     # make clean install
     
 Bugs
