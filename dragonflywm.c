@@ -1154,30 +1154,30 @@ void setup(void) {
     XFreeModifiermap(modmap);
 
     /* set up atoms */
-    wmatoms[WM_PROTOCOLS]                = XInternAtom(dis, "WM_PROTOCOLS",                False);
-    wmatoms[WM_DELETE_WINDOW]            = XInternAtom(dis, "WM_DELETE_WINDOW",            False);
-    wmatoms[WM_STATE]                    = XInternAtom(dis, "WM_STATE",                    False);
-    netatoms[NET_ACTIVE_WINDOW]          = XInternAtom(dis, "_NET_ACTIVE_WINDOW",          False);
-    netatoms[NET_CLOSE_WINDOW]           = XInternAtom(dis, "_NET_CLOSE_WINDOW",           False);
-    netatoms[NET_SUPPORTED]              = XInternAtom(dis, "_NET_SUPPORTED",              False);
-    netatoms[NET_SUPPORTING_WM_CHECK]    = XInternAtom(dis, "_NET_SUPPORTING_WM_CHECK",    False);
-    netatoms[NET_WM_NAME]                = XInternAtom(dis, "_NET_WM_NAME",                False);
-    netatoms[NET_CLIENT_LIST]            = XInternAtom(dis, "_NET_CLIENT_LIST",            False);
-    netatoms[NET_CLIENT_LIST_STACKING]   = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",   False);
-    netatoms[NET_NUMBER_OF_DESKTOPS]     = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",     False);
-    netatoms[NET_CURRENT_DESKTOP]        = XInternAtom(dis, "_NET_CURRENT_DESKTOP",        False);
-    netatoms[NET_DESKTOP_NAMES]          = XInternAtom(dis, "_NET_DESKTOP_NAMES",          False);
-    netatoms[NET_WM_DESKTOP]             = XInternAtom(dis, "_NET_WM_DESKTOP",             False);
-    netatoms[NET_WM_STATE]               = XInternAtom(dis, "_NET_WM_STATE",               False);
-    netatoms[NET_WM_STATE_ABOVE]         = XInternAtom(dis, "_NET_WM_STATE_ABOVE",         False);
-    netatoms[NET_WM_STATE_FULLSCREEN]    = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN",    False);
+    wmatoms[WM_PROTOCOLS]                    = XInternAtom(dis, "WM_PROTOCOLS",                    False);
+    wmatoms[WM_DELETE_WINDOW]                = XInternAtom(dis, "WM_DELETE_WINDOW",                False);
+    wmatoms[WM_STATE]                        = XInternAtom(dis, "WM_STATE",                        False);
+    netatoms[NET_ACTIVE_WINDOW]              = XInternAtom(dis, "_NET_ACTIVE_WINDOW",              False);
+    netatoms[NET_CLOSE_WINDOW]               = XInternAtom(dis, "_NET_CLOSE_WINDOW",               False);
+    netatoms[NET_SUPPORTED]                  = XInternAtom(dis, "_NET_SUPPORTED",                  False);
+    netatoms[NET_SUPPORTING_WM_CHECK]        = XInternAtom(dis, "_NET_SUPPORTING_WM_CHECK",        False);
+    netatoms[NET_WM_NAME]                    = XInternAtom(dis, "_NET_WM_NAME",                    False);
+    netatoms[NET_CLIENT_LIST]                = XInternAtom(dis, "_NET_CLIENT_LIST",                False);
+    netatoms[NET_CLIENT_LIST_STACKING]       = XInternAtom(dis, "_NET_CLIENT_LIST_STACKING",       False);
+    netatoms[NET_NUMBER_OF_DESKTOPS]         = XInternAtom(dis, "_NET_NUMBER_OF_DESKTOPS",         False);
+    netatoms[NET_CURRENT_DESKTOP]            = XInternAtom(dis, "_NET_CURRENT_DESKTOP",            False);
+    netatoms[NET_DESKTOP_NAMES]              = XInternAtom(dis, "_NET_DESKTOP_NAMES",              False);
+    netatoms[NET_WM_DESKTOP]                 = XInternAtom(dis, "_NET_WM_DESKTOP",                 False);
+    netatoms[NET_WM_STATE]                   = XInternAtom(dis, "_NET_WM_STATE",                   False);
+    netatoms[NET_WM_STATE_ABOVE]             = XInternAtom(dis, "_NET_WM_STATE_ABOVE",             False);
+    netatoms[NET_WM_STATE_FULLSCREEN]        = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN",        False);
     netatoms[NET_WM_STATE_DEMANDS_ATTENTION] = XInternAtom(dis, "_NET_WM_STATE_DEMANDS_ATTENTION", False);
-    netatoms[NET_WM_WINDOW_TYPE]         = XInternAtom(dis, "_NET_WM_WINDOW_TYPE",         False);
-    netatoms[NET_WM_WINDOW_TYPE_DOCK]    = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",    False);
-    netatoms[NET_WM_WINDOW_TYPE_SPLASH]  = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH",  False);
-    netatoms[NET_WM_WINDOW_TYPE_DIALOG]  = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG",  False);
-    netatoms[NET_WM_WINDOW_TYPE_UTILITY] = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_UTILITY", False);
-    netatoms[UTF8_STRING]                = XInternAtom(dis, "UTF8_STRING",                 False);
+    netatoms[NET_WM_WINDOW_TYPE]             = XInternAtom(dis, "_NET_WM_WINDOW_TYPE",             False);
+    netatoms[NET_WM_WINDOW_TYPE_DOCK]        = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",        False);
+    netatoms[NET_WM_WINDOW_TYPE_SPLASH]      = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH",      False);
+    netatoms[NET_WM_WINDOW_TYPE_DIALOG]      = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG",      False);
+    netatoms[NET_WM_WINDOW_TYPE_UTILITY]     = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_UTILITY",     False);
+    netatoms[UTF8_STRING]                    = XInternAtom(dis, "UTF8_STRING",                     False);
 
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
             PropModeReplace, (unsigned char *)netatoms, NET_COUNT);
