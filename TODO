@@ -1,11 +1,10 @@
 to implement:
-  *net_wm_state_demands_attention for skype (qt in general) focusurgent
   *nmaster
-  *per desktop mfact
 
 bugs:
-  *when closing last running application, client list does not get updated
-  *net_wm_window_type_dock : tooltips appear behind clients. XRaiseWindow initially works. Something permanent?
+  *sometimes window content does not refresh until resize client or change desktop (firefox, gedit)
+  *when closing last running application, client list does not get updated. only with tint2?
+  *net_wm_window_type_dock : tooltips appear behind clients. XRaiseWindow initially works. Something permanent? only with tint2?
   *panels do not see netwmdemandsattention urgent hints
   *machinebacon: we open two frames, one gets focus, we click into the other one, it gets focus but doesn't receive input (the input goes to the previous frame). So one has to click into the anyway active frame, then into the other one, and then it works. 
 

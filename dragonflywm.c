@@ -15,7 +15,6 @@
 #include <X11/cursorfont.h>
 
 #define LENGTH(x)       (sizeof(x)/sizeof(*x))
-#define DESKTOPS        (LENGTH(desksettings))
 #define CLEANMASK(mask) (mask & ~(numlockmask | LockMask))
 #define BUTTONMASK      ButtonPressMask|ButtonReleaseMask
 #define ISFFT(c)        (c->isfull || c->isfloat || c->istrans)
@@ -29,8 +28,9 @@ enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
        NET_SUPPORTING_WM_CHECK, NET_WM_NAME, NET_CLIENT_LIST,
        NET_CLIENT_LIST_STACKING, NET_NUMBER_OF_DESKTOPS,
        NET_CURRENT_DESKTOP, NET_DESKTOP_NAMES, NET_WM_DESKTOP,
-       NET_WM_STATE, NET_WM_STATE_FULLSCREEN, NET_WM_STATE_ABOVE,
-       NET_WM_WINDOW_TYPE, NET_WM_WINDOW_TYPE_DOCK, NET_WM_WINDOW_TYPE_SPLASH,
+       NET_WM_STATE, NET_WM_STATE_ABOVE, NET_WM_STATE_FULLSCREEN,
+       NET_WM_STATE_DEMANDS_ATTENTION, NET_WM_WINDOW_TYPE,
+       NET_WM_WINDOW_TYPE_DOCK, NET_WM_WINDOW_TYPE_SPLASH,
        NET_WM_WINDOW_TYPE_DIALOG, NET_WM_WINDOW_TYPE_UTILITY,
        UTF8_STRING, NET_COUNT };
 
@@ -393,16 +393,18 @@ void client_to_desktop(const Arg *arg) {
  * on its desktop.
  */
 void clientmessage(XEvent *e) {
+    Desktop *d = NULL; Client *c = NULL;
     if (e->xclient.message_type == netatoms[NET_WM_STATE]) {
         if ((unsigned)e->xclient.data.l[1] == netatoms[NET_WM_STATE_FULLSCREEN] || (unsigned)e->xclient.data.l[2] == netatoms[NET_WM_STATE_FULLSCREEN]) {
-            Desktop *d = NULL; Client *c = NULL;
             if ((wintoclient(e->xclient.window, &c, &d))) {
                 setfullscreen(c, d, (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isfull)));
                 if (!(c->isfloat || c->istrans) || !d->head->next) tile(d);
             }
+        } else if ((unsigned)e->xclient.data.l[1] == netatoms[NET_WM_STATE_DEMANDS_ATTENTION] || (unsigned)e->xclient.data.l[2] == netatoms[NET_WM_STATE_DEMANDS_ATTENTION]) {
+            if ((wintoclient(e->xclient.window, &c, &d)))
+                c->isurgn = (c != desktops[currdeskidx].curr && (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isurgn)));
         }
     } else if (e->xclient.message_type == netatoms[NET_ACTIVE_WINDOW]) {
-        Desktop *d = NULL; Client *c = NULL;
         if (wintoclient(e->xclient.window, &c, &d))
             focus(c, d);
     } else if (e->xclient.message_type == netatoms[NET_CLOSE_WINDOW]) deletewindow(e->xclient.window);
@@ -538,13 +540,16 @@ void focus(Client *c, Desktop *d) {
      * All other reference changes for curr and prev
      * should and are handled here.
      */
-    if (!d->head || !c) { /* no clients - no active window - nothing to do */
+    if (!d->head || !c) { /* no clients - no active window - focus root window */
         XSetInputFocus(dis, root, RevertToPointerRoot, CurrentTime);
         XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
         d->curr = d->prev = NULL;
         return;
     } else if (d->prev == c && d->curr != c->next) { d->prev = prevclient((d->curr = c), d);
     } else if (d->curr != c) { d->prev = d->curr; d->curr = c; }
+
+    if (c->isurgn)
+        c->isurgn = False;
 
     /* restack clients
      *
@@ -1166,6 +1171,7 @@ void setup(void) {
     netatoms[NET_WM_STATE]               = XInternAtom(dis, "_NET_WM_STATE",               False);
     netatoms[NET_WM_STATE_ABOVE]         = XInternAtom(dis, "_NET_WM_STATE_ABOVE",         False);
     netatoms[NET_WM_STATE_FULLSCREEN]    = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN",    False);
+    netatoms[NET_WM_STATE_DEMANDS_ATTENTION] = XInternAtom(dis, "_NET_WM_STATE_DEMANDS_ATTENTION", False);
     netatoms[NET_WM_WINDOW_TYPE]         = XInternAtom(dis, "_NET_WM_WINDOW_TYPE",         False);
     netatoms[NET_WM_WINDOW_TYPE_DOCK]    = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK",    False);
     netatoms[NET_WM_WINDOW_TYPE_SPLASH]  = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_SPLASH",  False);

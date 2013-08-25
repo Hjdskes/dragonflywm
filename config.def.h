@@ -24,6 +24,7 @@ static const int minwsz               = 50;        /* minimum window size in pix
 static const int default_desktop      = 0;         /* the desktop to focus initially */
 
 /* settings for each desktop */
+#define DESKTOPS 4
 static const DeskSettings desksettings[] = { \
     /* name    layout   mfact show panel */
     { "Web",   TILE,    0.70, True },
