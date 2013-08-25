@@ -746,18 +746,16 @@ void maprequest(XEvent *e) {
     Bool follow = False, floating = False, aside = False;
     int newdsk = currdeskidx;
 
-    if (!XGetTextProperty(dis, w, &name, netatoms[NET_WM_NAME]))
-        XGetTextProperty(dis, w, &name, XA_WM_NAME);
-    XGetClassHint(dis, w, &ch);
-
-    for (unsigned int i = 0; i < LENGTH(rules); i++)
-        if ((!rules[i].title || strstr((char *)name.value, rules[i].title))
-                && (!rules[i].class || strstr(ch.res_class, rules[i].class))
-                && (!rules[i].instance || strstr(ch.res_name, rules[i].instance))) {
-            if (rules[i].desktop >= 0 && rules[i].desktop < DESKTOPS) newdsk = rules[i].desktop;
-            follow = rules[i].follow, floating = rules[i].floating, aside = rules[i].attachaside;
-            break;
-        }
+    if ((XGetTextProperty(dis, w, &name, netatoms[NET_WM_NAME]) || XGetTextProperty(dis, w, &name, XA_WM_NAME)) && XGetClassHint(dis, w, &ch)) {
+        for (unsigned int i = 0; i < LENGTH(rules); i++)
+            if ((!rules[i].title || strstr((char *)name.value, rules[i].title))
+                    && (!rules[i].class || strstr(ch.res_class, rules[i].class))
+                    && (!rules[i].instance || strstr(ch.res_name, rules[i].instance))) {
+                if (rules[i].desktop >= 0 && rules[i].desktop < DESKTOPS) newdsk = rules[i].desktop;
+                follow = rules[i].follow, floating = rules[i].floating, aside = rules[i].attachaside;
+                break;
+            }
+    }
     if (ch.res_class) XFree(ch.res_class);
     if (ch.res_name) XFree(ch.res_name);
     if (name.value) XFree(name.value);
