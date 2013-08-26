@@ -1,21 +1,23 @@
-to implement:
-  *nmaster
-
 bugs:
+  *fix nmaster uneven spacing
   *sometimes window content does not refresh until resize client or change desktop (firefox, gedit)
   *when closing last running application, client list does not get updated. only with tint2?
   *net_wm_window_type_dock : tooltips appear behind clients. XRaiseWindow initially works. Something permanent? only with tint2?
   *panels do not see netwmdemandsattention urgent hints
-  *machinebacon: we open two frames, one gets focus, we click into the other one, it gets focus but doesn't receive input (the input goes to the previous frame). So one has to click into the anyway active frame, then into the other one, and then it works. 
+  *machinebacon: we open two frames, one gets focus, we click into the other one,
+   it gets focus but doesn't receive input (the input goes to the previous frame).
+   So one has to click into the anyway active frame, then into the other one, and then it works. gcolor3 
 
 check / cleanup:
   *netclientlist : improve c->desk
   *setdesktopnames : cleanup
   *general code commenting and cleanup
   *more calls to change clientstate?
-  *fix compile warnings
+  *properly implement DESKTOPS
 
 next release:
+  *combine both desktop arrays?
+  *improve setup atoms?
   *make client appear on all desktops
   *minimizing/restoring clients
   *give non-resizeable clients their own (requested) position

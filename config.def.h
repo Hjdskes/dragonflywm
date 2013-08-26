@@ -26,11 +26,11 @@ static const int default_desktop      = 0;         /* the desktop to focus initi
 /* settings for each desktop */
 #define DESKTOPS 4
 static const DeskSettings desksettings[] = { \
-    /* name    layout   mfact show panel */
-    { "Web",   TILE,    0.70, True },
-    { "Chill", TILE,    0.70, True },
-    { "Term",  TILE,    0.70, True },
-    { "Work",  MONOCLE, 0.70, True },
+    /* name    layout   mfact nmaster show panel */
+    { "Web",   TILE,    0.70,    1,      True    },
+    { "Chill", TILE,    0.70,    1,      True    },
+    { "Term",  TILE,    0.70,    1,      True    },
+    { "Work",  MONOCLE, 0.70,    1,      True    },
 };
 
 /**
@@ -70,6 +70,8 @@ static Key keys[] = {
     {  MOD1,             XK_k,             prev_win,       {NULL}},
     {  MOD1,             XK_Down,          move_down,      {NULL}},
     {  MOD1,             XK_Up,            move_up,        {NULL}},
+    {  MOD1,             XK_minus,         nmaster,        {.i = -1}},
+    {  MOD1,             XK_equal,         nmaster,        {.i = +1}}, 
     {  MOD1,             XK_bracketleft,   resize_master,  {.i = -10}}, /* decrease size in px */
     {  MOD1,             XK_bracketright,  resize_master,  {.i = +10}}, /* increase size in px */
     {  MOD1|SHIFT,       XK_bracketleft,   resize_stack,   {.i = -10}}, /* shrink   size in px */
