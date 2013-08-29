@@ -758,7 +758,6 @@ void maprequest(XEvent *e) {
                     && (!rules[i].instance || strstr(ch.res_name, rules[i].instance))) {
                 if (rules[i].desktop >= 0 && rules[i].desktop < DESKTOPS) newdsk = rules[i].desktop;
                 follow = rules[i].follow, floating = rules[i].floating, aside = rules[i].attachaside;
-                break;
             }
     }
     if (ch.res_class) XFree(ch.res_class);
