@@ -1,7 +1,10 @@
 bugs:
+  *uselessgap multiple clients vs one client -> panel
   *fix nmaster uneven spacing
   *sometimes window content does not refresh until resize client or change desktop (firefox, gedit)
+  *skype acts wrong with setclientstate in maprequest
   *when closing last running application, client list does not get updated. only with tint2?
+   https://github.com/Unia/dragonflywm/commit/dfc7457eaa2335c37334d1ab7b0918ddb8987e05
   *net_wm_window_type_dock : tooltips appear behind clients. XRaiseWindow initially works. Something permanent? only with tint2?
   *panels do not see netwmdemandsattention urgent hints
   *machinebacon: we open two frames, one gets focus, we click into the other one,
@@ -9,7 +12,6 @@ bugs:
    So one has to click into the anyway active frame, then into the other one, and then it works. gcolor3 
 
 check / cleanup:
-  *netclientlist : improve c->desk
   *setdesktopnames : cleanup
   *general code commenting and cleanup
   *more calls to change clientstate?
@@ -24,4 +26,3 @@ next release:
       skype splash
   *honor transient hints on e.g. about dialogs
   *move applications around in panel
-  *look into why window rules behave differently from DWM

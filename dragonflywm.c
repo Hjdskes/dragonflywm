@@ -134,7 +134,6 @@ static void togglepanel();
  * isfloat - set when the window is floating
  * istrans - set when the window is transient
  * win     - the window this client is representing
- * desk    - the number of the desktop the client is on
  *
  * istrans is separate from isfloat as floating windows can be reset to
  * their tiling positions, while the transients will always be floating
@@ -143,7 +142,6 @@ typedef struct Client {
     struct Client *next;
     Bool isurgn, isfull, isfloat, istrans;
     Window win;
-    int desk;
 } Client;
 
 /**
@@ -197,7 +195,7 @@ static void setup(void);
 static void sigchld(int sig);
 static void stack(int x, int y, int w, int h, const Desktop *d);
 static void tile(Desktop *d);
-static void updateclientdesktop(Client *c);
+static void updateclientdesktop(Client *c, int desktop);
 static void updateclientlist(void);
 static void updatecurrentdesktop(void);
 static void unmapnotify(XEvent *e);
@@ -261,7 +259,7 @@ static void (*layout[MODES])(int x, int y, int w, int h, const Desktop *d) = {
  *
  * if there is no head at the given desktop
  * add the window as the head
- * otherwise if ATTACH_ASIDE is not set,
+ * otherwise if attachaside is not set,
  * add the window as the last client
  * otherwise add the window as head
  */
@@ -364,8 +362,7 @@ void client_to_desktop(const Arg *arg) {
     XChangeWindowAttributes(dis, root, CWEventMask, &(XSetWindowAttributes){.event_mask = ROOTMASK});
     if (!(c->isfloat || c->istrans) || (d->head && !d->head->next)) tile(d);
 
-    c->desk = arg->i;
-    updateclientdesktop(c);
+    updateclientdesktop(c, arg->i);
 
     /* link client to new desktop and make it the current */
     focus(l ? (l->next = c):n->head ? (n->head->next = c):(n->head = c), n);
@@ -769,7 +766,6 @@ void maprequest(XEvent *e) {
     if (name.value) XFree(name.value);
 
     c = addwindow(w, (d = &desktops[newdsk]), aside); /* from now on, use c->win */
-    c->desk = newdsk;
     c->istrans = XGetTransientForHint(dis, c->win, &w);
     if ((c->isfloat = (floating || d->mode == FLOAT)) && !c->istrans)
         XMoveWindow(dis, c->win, (ww - wa.width)/2, (wh - wa.height)/2);
@@ -796,8 +792,8 @@ void maprequest(XEvent *e) {
             PropModeAppend, (unsigned char *)&(c->win), 1);
     XChangeProperty(dis, root, netatoms[NET_CLIENT_LIST_STACKING], XA_WINDOW, 32,
             PropModeAppend, (unsigned char *)&(c->win), 1);
-    setclientstate(c, NormalState);
-    updateclientdesktop(c);
+    /*setclientstate(c, NormalState);*/
+    updateclientdesktop(c, newdsk);
     focus(c, d);
 }
 
@@ -1362,9 +1358,9 @@ void togglepanel(void) {
 /**
  * sets what desktop a client is on for EWMH aware panels
  */
-void updateclientdesktop(Client *c) {
+void updateclientdesktop(Client *c, int desktop) {
     XChangeProperty(dis, c->win, netatoms[NET_WM_DESKTOP], XA_CARDINAL, 32,
-            PropModeReplace, (unsigned char *)&(c->desk), 1);
+            PropModeReplace, (unsigned char *)&(desktop), 1);
 }
 
 /**
