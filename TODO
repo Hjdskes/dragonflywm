@@ -1,6 +1,5 @@
 bugs:
   *uselessgap multiple clients vs one client -> panel
-  *fix nmaster uneven spacing
   *sometimes window content does not refresh until resize client or change desktop (firefox, gedit)
   *skype acts wrong with setclientstate in maprequest
   *when closing last running application, client list does not get updated. only with tint2?
@@ -26,3 +25,4 @@ next release:
       skype splash
   *honor transient hints on e.g. about dialogs
   *move applications around in panel
+  *change all layouts to something like DWM?

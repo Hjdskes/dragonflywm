@@ -5,7 +5,7 @@ WMNAME  = dragonflywm
 
 PREFIX ?= /usr/local
 BINDIR ?= ${PREFIX}/bin
-MANPREFIX = ${PREFIX}/share/man
+MANDIR ?= ${PREFIX}/share/man
 
 X11INC = -I/usr/X11R6/include
 X11LIB = -L/usr/X11R6/lib -lX11
@@ -56,13 +56,13 @@ clean:
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@install -Dm755 ${WMNAME} ${DESTDIR}${PREFIX}/bin/${WMNAME}
-	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man.1
-	@install -Dm644 ${WMNAME}.1 ${DESTDIR}${MANPREFIX}/man1/${WMNAME}.1
+	@echo installing manual page to ${DESTDIR}${MANPDIR}/man.1
+	@install -Dm644 ${WMNAME}.1 ${DESTDIR}${MANDIR}/man1/${WMNAME}.1
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/${WMNAME}
-	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
-	@rm -f ${DESTDIR}${MANPREFIX}/man1/${WMNAME}.1
+	@echo removing manual page from ${DESTDIR}${MANDIR}/man1
+	@rm -f ${DESTDIR}${MANDIR}/man1/${WMNAME}.1
 
 .PHONY: all options clean install uninstall
