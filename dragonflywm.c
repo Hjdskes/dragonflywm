@@ -1285,7 +1285,7 @@ void spawn(const Arg *arg) {
  */
 void stack(int x, int y, int w, int h, const Desktop *d) {
     Client *c = NULL, *t = NULL; Bool b = (d->mode == BSTACK);
-    int n = 0, diff = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * d->mfact + d->masz, nm = d->nm;
+    int n = 0, clients = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * d->mfact + d->masz, nm = d->nm;
 
     /* count stack windows and grab first non-floating, non-fullscreen window */
     for (t = d->head; t; t = t->next) if (!ISFFT(t)) { if (c) ++n; else c = t; }
@@ -1325,12 +1325,12 @@ void stack(int x, int y, int w, int h, const Desktop *d) {
 
     /* tile non-floating, non-fullscreen master windows to equally share the master area */
     for (int i = 0; i < nm; i++) {
-        int xx = (b ? (ww - diff) : (wh - diff)) / (nm - i);
-        if (b) resizeclient(c, x + uselessgap + diff, y + uselessgap, xx - 2*(borderwidth + uselessgap),
+        int xx = (b ? (ww - clients) : (wh - clients)) / (nm - i);
+        if (b) resizeclient(c, x + uselessgap + clients, y + uselessgap, xx - 2*(borderwidth + uselessgap),
                ma - 2*(borderwidth + uselessgap));
-        else   resizeclient(c, x + uselessgap, y + uselessgap + diff, ma - 2*(borderwidth + uselessgap),
+        else   resizeclient(c, x + uselessgap, y + uselessgap + clients, ma - 2*(borderwidth + uselessgap),
                     xx - 2*(borderwidth + uselessgap));
-        diff += (b ? c->w : c->h) + 2*borderwidth + uselessgap;
+        clients += (b ? c->w : c->h) + 2*borderwidth + uselessgap;
         for (c = c->next; c && ISFFT(c); c = c->next);
     }
 
