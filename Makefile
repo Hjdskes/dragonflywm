@@ -56,7 +56,7 @@ clean:
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@install -Dm755 ${WMNAME} ${DESTDIR}${PREFIX}/bin/${WMNAME}
-	@echo installing manual page to ${DESTDIR}${MANPDIR}/man.1
+	@echo installing manual page to ${DESTDIR}${MANDIR}/man.1
 	@install -Dm644 ${WMNAME}.1 ${DESTDIR}${MANDIR}/man1/${WMNAME}.1
 
 uninstall:
