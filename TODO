@@ -1,4 +1,6 @@
 bugs:
+  *resize_master resizes client over uselessgap when pushed to min
+  *togglepanel bug
   *uselessgap multiple clients vs one client -> panel
   *sometimes window content does not refresh until resize client or change desktop (firefox, gedit)
   *skype acts wrong with setclientstate in maprequest
@@ -15,14 +17,21 @@ check / cleanup:
   *general code commenting and cleanup
   *more calls to change clientstate?
   *properly implement DESKTOPS
+  *rework stack² layout with c->x?
+  *fix int vs unsigned int
+  *clean up code for next commit
 
 next release:
   *combine both desktop arrays?
   *improve setup atoms?
   *make client appear on all desktops
   *minimizing/restoring clients
-  *give non-resizeable clients their own (requested) position
-      skype splash
   *honor transient hints on e.g. about dialogs
   *move applications around in panel
   *change all layouts to something like DWM?
+
+deletewindow -> dwm
+destroynotify -> dwm
+killclient -> dwm
+removeclient -> dwm
+unmapnotify -> dwm
