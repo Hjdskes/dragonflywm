@@ -22,6 +22,7 @@ static const Bool follow_window       = False;     /* follow the window when mov
 static const Bool follow_mouse        = True;      /* focus the window the mouse just entered */
 static const int minwsz               = 50;        /* minimum window size in pixels */
 static const int default_desktop      = 0;         /* the desktop to focus initially */
+static const Bool resizehints         = True;      /* true means respect size hints in tiled resizals */
 
 /* settings for each desktop */
 #define DESKTOPS 4
@@ -38,10 +39,10 @@ static const DeskSettings desksettings[] = { \
  * if desktop is negative, then current is assumed
  */
 static const AppRule rules[] = { \
-    /* class      instance  title  desktop  follow  float */
-    { "Firefox",    NULL,   NULL,     0,    False,  False },
-    { "MPlayer",    NULL,   NULL,     3,    True,   True  },
-    { "Gimp",       NULL,   NULL,     3,    False,  False },
+    /* class            instance        title         desktop  follow  float   attachaside */
+    { "Firefox",          NULL,         NULL,            0,    False,  False,  False },
+    { "MPlayer",          NULL,         NULL,            3,    True,   True,   False },
+    { "Gimp",             NULL,         NULL,            3,    False,  False,  False },
 };
 
 /* helper for spawning shell commands */
