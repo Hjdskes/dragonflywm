@@ -691,8 +691,7 @@ void focus(Client *c, Desktop *d) {
          *      - the mode is MONOCLE or,
          *      - it is the only window on screen
          */
-        /*XSetWindowBorderWidth(dis, c->win, c->isfull || (!ISFFT(c) &&
-                (d->mode == MONOCLE || !d->head->next)) ? 0:c->bw);*/
+        /*XSetWindowBorderWidth(dis, c->win, (!ISFFT(c) && (d->mode == MONOCLE || !d->head->next)) ? 0:c->bw);*/
         if (c != d->curr) w[c->isfull ? --fl:ISFFT(c) ? --ft:--n] = c->win;
         if (c == d->curr) grabbuttons(c);
     }
@@ -854,6 +853,7 @@ void maprequest(XEvent *e) {
     unsigned long l;
     unsigned char *state = NULL, *type = NULL;
     Atom a;
+    XWindowChanges wc;
     XWindowAttributes wa = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
@@ -885,6 +885,8 @@ void maprequest(XEvent *e) {
     c->w = c->oldw = wa.width;
     c->h = c->oldh = wa.height;
     c->bw = borderwidth;
+    wc.border_width = c->bw;
+    XConfigureWindow(dis, w, CWBorderWidth, &wc);
     configure(c);
     updatesizehints(c);
     /*setclientstate(c, NormalState);*/
