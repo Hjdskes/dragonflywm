@@ -1,6 +1,5 @@
 bugs:
   *resize_master resizes client over uselessgap when pushed to min
-  *uselessgap multiple clients vs one client -> panel
   *skype acts wrong with setclientstate in maprequest
   *when closing last running application, client list does not get updated. only with tint2?
    https://github.com/Unia/dragonflywm/commit/dfc7457eaa2335c37334d1ab7b0918ddb8987e05
@@ -17,13 +16,13 @@ check / cleanup:
   *properly implement DESKTOPS
   *rework stack² layout with c->x?
   *fix int vs unsigned int
+  *do we need ev->value_mask & CWBorderWidth in combination with wc.border_width = c->bw and XConfigureWindow(dis, w, CWBorderWidth, &wc);
 
 next release:
   *combine both desktop arrays?
   *improve setup atoms?
   *make client appear on all desktops
   *minimizing/restoring clients
-  *honor transient hints on e.g. about dialogs
   *move applications around in panel
   *change all layouts to something like DWM?
 

@@ -523,7 +523,7 @@ void configurerequest(XEvent *e) {
     if (wintoclient(ev->window, &c, &d)) {
         if (ev->value_mask & CWBorderWidth)
             c->bw = ev->border_width;
-        if (c->isfloat || d->mode == FLOAT) {
+        else if (c->isfloat || d->mode == FLOAT) {
             if (ev->value_mask & CWX) {
                 c->oldx = c->x;
                 c->x = ev->x;
@@ -947,10 +947,9 @@ void mousemotion(const Arg *arg) {
         XWarpPointer(dis, d->curr->win, d->curr->win, 0, 0, 0, 0, --wa.width, --wa.height);
         if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
                 GrabModeAsync, None, cur_res, CurrentTime) != GrabSuccess) return;
-    } else if (arg->i == MOVE) {
+    } else if (arg->i == MOVE)
         if (XGrabPointer(dis, root, False, BUTTONMASK|PointerMotionMask, GrabModeAsync,
                 GrabModeAsync, None, cur_move, CurrentTime) != GrabSuccess) return;
-    }
 
     int rx, ry, c, xw, yh; unsigned int v; Window w;
     if (!XQueryPointer(dis, root, &w, &w, &rx, &ry, &c, &c, &v) || w != d->curr->win) return;
@@ -1440,7 +1439,7 @@ void stack(int x, int y, int w, int h, const Desktop *d) {
                 ma - 2*(c->bw + uselessgap), False);
         else   resize(c, x + uselessgap, y + uselessgap + clients, ma - 2*(c->bw + uselessgap),
                 xx - 2*(c->bw + uselessgap), False);
-        clients += (b ? c->w : c->h) + 2*c->bw + uselessgap;
+        clients += (b ? HEIGHT(c) : WIDTH(c)) + uselessgap;
         for (c = c->next; c && ISFFT(c); c = c->next);
     }
 
