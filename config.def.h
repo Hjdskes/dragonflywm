@@ -11,18 +11,18 @@
 #define SHIFT   ShiftMask
 
 /* generic settings */
-static const Bool panelhoriz          = True;      /* True means panel is horizontal */
-static const Bool toppanel            = False;     /* False means panel is on bottom */
-static const unsigned int panelheight = 38;        /* 0 for no space for panel, thus no panel */
-static const char focuscolor[]        = "#FF950E"; /* focused window border color */
-static const char unfocuscolor[]      = "#3F3F3F"; /* unfocused window border color */
-static const unsigned int borderwidth = 1;         /* window border width */
-static const unsigned int uselessgap  = 2;         /* the size of the useless gap in pixels */
-static const Bool follow_window       = False;     /* follow the window when moved to a different desktop */
-static const Bool follow_mouse        = True;      /* focus the window the mouse just entered */
-static const int minwsz               = 50;        /* minimum window size in pixels */
-static const int default_desktop      = 0;         /* the desktop to focus initially */
-static const Bool resizehints         = True;      /* true means respect size hints in tiled resizals */
+static const Bool panelhoriz              = True;      /* True means panel is horizontal */
+static const Bool toppanel                = False;     /* False means panel is on bottom */
+static const unsigned int panelheight     = 38;        /* 0 for no space for panel, thus no panel */
+static const char focuscolor[]            = "#FF950E"; /* focused window border color */
+static const char unfocuscolor[]          = "#3F3F3F"; /* unfocused window border color */
+static const unsigned int borderwidth     = 1;         /* window border width */
+static const unsigned int uselessgap      = 2;         /* the size of the useless gap in pixels */
+static const Bool follow_window           = False;     /* follow the window when moved to a different desktop */
+static const Bool follow_mouse            = True;      /* focus the window the mouse just entered */
+static const unsigned int minwsz          = 50;        /* minimum window size in pixels */
+static const unsigned int default_desktop = 0;         /* the desktop to focus initially */
+static const Bool resizehints             = True;      /* true means respect size hints in tiled resizals */
 
 /* settings for each desktop */
 #define DESKTOPS 4

@@ -17,8 +17,8 @@
 #define LENGTH(x)       (sizeof(x)/sizeof(*x))
 #define MAX(A, B)       ((A) > (B) ? (A) : (B))
 #define MIN(A, B)       ((A) < (B) ? (A) : (B))
-#define WIDTH(X)        ((X)->w + 2*borderwidth)
-#define HEIGHT(X)       ((X)->h + 2*borderwidth)
+#define WIDTH(X)        ((X)->w + 2*(X)->bw)
+#define HEIGHT(X)       ((X)->h + 2*(X)->bw)
 #define CLEANMASK(mask) (mask & ~(numlockmask | LockMask))
 #define BUTTONMASK      ButtonPressMask|ButtonReleaseMask
 #define ISFFT(c)        (c->isfull || c->isfloat || c->istrans)
@@ -149,8 +149,8 @@ typedef struct Client {
     Bool isurgn, isfull, isfloat, istrans, isfixed;
     Window win;
     float mina, maxa;
-    int x, y, w, h;
-    int oldx, oldy, oldw, oldh;
+    int x, y, w, h, bw;
+    int oldx, oldy, oldw, oldh, oldbw;
     int basew, baseh, incw, inch, maxw, maxh, minw, minh;
 } Client;
 
@@ -203,7 +203,7 @@ static void resizeclient(Client *c, int x, int y, int w, int h);
 static void run(void);
 static void setclientstate(Client *c, long state);
 static void setdesktopnames(void);
-static void setfullscreen(Client *c, Desktop *d, Bool fullscrn);
+static void setfullscreen(Client *c, Desktop *d, Bool fullscreen);
 static void setnumberofdesktops(void);
 static void setup(void);
 static void sigchld(int sig);
@@ -299,8 +299,8 @@ Bool applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
     if (interact) {
         if (*x > ww) *x = ww - WIDTH(c);
         if (*y > wh) *y = wh - HEIGHT(c);
-        if (*x + *w + 2*borderwidth < 0) *x = 0;
-        if (*y + *h + 2*borderwidth < 0) *y = 0;
+        if (*x + *w + 2*c->bw < 0) *x = 0;
+        if (*y + *h + 2*c->bw < 0) *y = 0;
     } else {
         if (*x >= ww) *x = ww - WIDTH(c);
         if (*y >= wh) *y = wh - HEIGHT(c);
@@ -316,27 +316,21 @@ Bool applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
         }
         /* adjust for aspect limits */
         if (c->mina > 0 && c->maxa > 0) {
-            if (c->maxa < (float)*w / *h)
-                *w = *h * c->maxa + 0.5;
-            else if (c->mina < (float)*h / *w)
-                *h = *w * c->mina + 0.5;
+            if (c->maxa < (float)*w / *h) *w = *h * c->maxa + 0.5;
+            else if (c->mina < (float)*h / *w) *h = *w * c->mina + 0.5;
         }
         if (baseismin) { /* increment calculation requires this */
             *w -= c->basew;
             *h -= c->baseh;
         }
         /* adjust for increment value */
-        if (c->incw)
-            *w -= *w % c->incw;
-        if (c->inch)
-            *h -= *h % c->inch;
+        if (c->incw) *w -= *w % c->incw;
+        if (c->inch) *h -= *h % c->inch;
         /* restore base dimensions */
         *w = MAX(*w + c->basew, c->minw);
         *h = MAX(*h + c->baseh, c->minh);
-        if (c->maxw)
-            *w = MIN(*w, c->maxw);
-        if (c->maxh)
-            *h = MIN(*h, c->maxh);
+        if (c->maxw) *w = MIN(*w, c->maxw);
+        if (c->maxh) *h = MIN(*h, c->maxh);
     }
     return *x != c->x || *y != c->y || *w != c->w || *h != c->h;
 }
@@ -479,11 +473,28 @@ void clientmessage(XEvent *e) {
         change_desktop(&(Arg){.i = e->xclient.data.l[0]});
 }
 
+void configure(Client *c) {
+    XConfigureEvent ce;
+
+    ce.type = ConfigureNotify;
+    ce.display = dis;
+    ce.event = c->win;
+    ce.window = c->win;
+    ce.x = c->x;
+    ce.y = c->y;
+    ce.width = c->w;
+    ce.height = c->h;
+    ce.border_width = c->bw;
+    ce.above = None;
+    ce.override_redirect = False;
+    XSendEvent(dis, c->win, False, StructureNotifyMask, (XEvent *)&ce);
+}
+
 /**
  * configure a window's size, position, border width, and stacking order.
  *
  * windows usually have a prefered size (width, height) and position (x, y),
- * and sometimes border width (borderwidth) and stacking order (above, detail).
+ * and sometimes border width and stacking order (above, detail).
  * a configure request attempts to reconfigure those properties for a window.
  *
  * we don't really care about those values, because a tiling wm will impose
@@ -510,6 +521,8 @@ void configurerequest(XEvent *e) {
     XWindowChanges wc;
 
     if (wintoclient(ev->window, &c, &d)) {
+        if (ev->value_mask & CWBorderWidth)
+            c->bw = ev->border_width;
         if (c->isfloat || d->mode == FLOAT) {
             if (ev->value_mask & CWX) {
                 c->oldx = c->x;
@@ -541,29 +554,12 @@ void configurerequest(XEvent *e) {
         wc.y = ev->y;
         wc.width = ev->width;
         wc.height = ev->height;
-        wc.border_width = borderwidth;
+        wc.border_width = ev->border_width;
         wc.sibling = ev->above;
         wc.stack_mode = ev->detail;
         XConfigureWindow(dis, ev->window, ev->value_mask, &wc);
     }
     XSync(dis, False);
-}
-
-void configure(Client *c) {
-    XConfigureEvent ce;
-
-    ce.type = ConfigureNotify;
-    ce.display = dis;
-    ce.event = c->win;
-    ce.window = c->win;
-    ce.x = c->x;
-    ce.y = c->y;
-    ce.width = c->w;
-    ce.height = c->h;
-    ce.border_width = borderwidth;
-    ce.above = None;
-    ce.override_redirect = False;
-    XSendEvent(dis, c->win, False, StructureNotifyMask, (XEvent *)&ce);
 }
 
 /**
@@ -662,7 +658,6 @@ void focus(Client *c, Desktop *d) {
      * should be and are handled here.
      */
     if (!d->head || !c) { /* no clients - no active window - focus root window */
-        XSetInputFocus(dis, root, RevertToPointerRoot, CurrentTime);
         XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
         d->curr = d->prev = NULL;
         return;
@@ -696,8 +691,8 @@ void focus(Client *c, Desktop *d) {
          *      - the mode is MONOCLE or,
          *      - it is the only window on screen
          */
-        XSetWindowBorderWidth(dis, c->win, c->isfull || (!ISFFT(c) &&
-                (d->mode == MONOCLE || !d->head->next)) ? 0:borderwidth);
+        /*XSetWindowBorderWidth(dis, c->win, c->isfull || (!ISFFT(c) &&
+                (d->mode == MONOCLE || !d->head->next)) ? 0:c->bw);*/
         if (c != d->curr) w[c->isfull ? --fl:ISFFT(c) ? --ft:--n] = c->win;
         if (c == d->curr) grabbuttons(c);
     }
@@ -797,7 +792,7 @@ void grid(int x, int y, int w, int h, const Desktop *d) {
         if (ISFFT(c)) continue; else ++i;
         if (i/rows + 1 > cols - n%cols) rows = n/cols + 1;
         resizeclient(c, x + cn*cw + uselessgap, y + rn*ch/rows + uselessgap,
-                cw - 2*borderwidth - uselessgap, ch/rows - 2*borderwidth - uselessgap);
+                cw - 2*c->bw - uselessgap, ch/rows - 2*c->bw - uselessgap);
         if (++rn >= rows) { rn = 0; cn++; }
     }
 }
@@ -852,8 +847,17 @@ void last_desktop(void) {
 void maprequest(XEvent *e) {
     Desktop *d = NULL; Client *c = NULL;
     Window w = e->xmaprequest.window;
+    XTextProperty name;
+    XClassHint ch = {0, 0};
+    Bool follow = False, floating = False, aside = False;
+    int newdsk = currdeskidx, i;
+    unsigned long l;
+    unsigned char *state = NULL, *type = NULL;
+    Atom a;
+    XWindowAttributes wa = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    int i; unsigned long l; unsigned char *state = NULL, *type = NULL; Atom a;
+    if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
+
     if (XGetWindowProperty(dis, w, netatoms[NET_WM_WINDOW_TYPE], 0L, sizeof a,
             False, XA_ATOM, &a, &i, &l, &l, &type) == Success && type)
         if (*(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DOCK] || *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DESKTOP]) {
@@ -861,14 +865,6 @@ void maprequest(XEvent *e) {
 	        if (type) XFree(type);
             return;
         }
-
-    XWindowAttributes wa = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
-
-    XTextProperty name;
-    XClassHint ch = {0, 0};
-    Bool follow = False, floating = False, aside = False;
-    int newdsk = currdeskidx;
 
     if ((XGetTextProperty(dis, w, &name, netatoms[NET_WM_NAME]) || XGetTextProperty(dis, w, &name, XA_WM_NAME)) && XGetClassHint(dis, w, &ch)) {
         for (unsigned int i = 0; i < LENGTH(rules); i++)
@@ -888,6 +884,7 @@ void maprequest(XEvent *e) {
     c->y = c->oldy = wa.y;
     c->w = c->oldw = wa.width;
     c->h = c->oldh = wa.height;
+    c->bw = borderwidth;
     configure(c);
     updatesizehints(c);
     /*setclientstate(c, NormalState);*/
@@ -976,7 +973,7 @@ void mousemotion(const Arg *arg) {
  * each window should cover all the available screen space
  */
 void monocle(int x, int y, int w, int h, const Desktop *d) {
-    for (Client *c = d->head; c; c = c->next) if (!ISFFT(c)) resize(c, x, y, w, h, False);
+    for (Client *c = d->head; c; c = c->next) if (!ISFFT(c)) resize(c, x, y, w - 2*c->bw, h - 2*c->bw, False);
 }
 
 /**
@@ -1160,7 +1157,7 @@ void resizeclient(Client *c, int x, int y, int w, int h) {
     c->oldy = c->y; c->y = wc.y = y;
     c->oldw = c->w; c->w = wc.width = w;
     c->oldh = c->h; c->h = wc.height = h;
-    wc.border_width = borderwidth;
+    wc.border_width = c->bw;
     XConfigureWindow(dis, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
     configure(c);
     XSync(dis, False);
@@ -1173,8 +1170,8 @@ void resizeclient(Client *c, int x, int y, int w, int h) {
  */
 void resize_master(const Arg *arg) {
     Desktop *d = &desktops[currdeskidx];
-    int msz = (d->mode == BSTACK ? wh:ww) * d->mfact + (d->masz += arg->i);
-    if (msz >= minwsz + uselessgap && (d->mode == BSTACK ? wh:ww) - msz >= minwsz + uselessgap) tile(d);
+    unsigned int msz = (d->mode == BSTACK ? wh:ww) * d->mfact + (d->masz += arg->i);
+    if (msz >= minwsz && (d->mode == BSTACK ? wh:ww) - msz >= minwsz + uselessgap) tile(d);
     else d->masz -= arg->i; /* reset master area size */
 }
 
@@ -1247,16 +1244,25 @@ void setdesktopnames(void) {
  * the border should be borderwidth,
  * except if no other client is on that desktop.
  */
-void setfullscreen(Client *c, Desktop *d, Bool fullscrn) {
-    if (fullscrn != c->isfull) XChangeProperty(dis, c->win,
-            netatoms[NET_WM_STATE], XA_ATOM, 32, PropModeReplace, (unsigned char*)
-            ((c->isfull = fullscrn) ? &netatoms[NET_WM_STATE_FULLSCREEN]:0), fullscrn);
-    if (fullscrn) resizeclient(c, 0, 0, ww, wh + panelheight);
-    else { c->x = c->oldx; c->y = c->oldy; c->w = c->oldw; c->h = c->oldh;
+void setfullscreen(Client *c, Desktop *d, Bool fullscreen) {
+    if (fullscreen) {
+        XChangeProperty(dis, c->win, netatoms[NET_WM_STATE], XA_ATOM, 32,
+                PropModeReplace, (unsigned char*)&netatoms[NET_WM_STATE_FULLSCREEN], 1);
+        c->isfull = True;
+        c->oldbw = c->bw;
+        c->bw = 0;
+        c->isfloat = True;
+        resizeclient(c, 0, 0, ww, wh + panelheight);
+    } else {
+        XChangeProperty(dis, c->win, netatoms[NET_WM_STATE], XA_ATOM, 32,
+                PropModeReplace, (unsigned char*)0, 0);
+        c->isfull = False;
+        c->bw = c->oldbw;
+        c->isfloat = False;
+        c->x = c->oldx; c->y = c->oldy; c->w = c->oldw; c->h = c->oldh;
         resizeclient(c, c->x, c->y, c->w, c->h);
         tile(d);
     }
-    XSetWindowBorderWidth(dis, c->win, (c->isfull || !d->head->next ? 0:borderwidth));
 }
 
 /**
@@ -1362,7 +1368,7 @@ void setup(void) {
     XSync(dis, False);
 
     grabkeys();
-    if (default_desktop >= 0 && default_desktop < DESKTOPS) change_desktop(&(Arg){.i = default_desktop});
+    if (default_desktop < DESKTOPS) change_desktop(&(Arg){.i = default_desktop});
 }
 
 void sigchld(__attribute__((unused)) int sig) {
@@ -1421,23 +1427,23 @@ void stack(int x, int y, int w, int h, const Desktop *d) {
      * should be added to the first stack client (p) so that it satisfies sasz,
      * and also, does not result in gaps created on the bottom of the screen.
      */
-    if (c && !n) resizeclient(c, x, y, w - 2*borderwidth, h - 2*borderwidth);
+    if (c && !n) resizeclient(c, x, y, w - 2*c->bw, h - 2*c->bw);
     if (!c || !n) return; else if (n - nm <= 0) nm = n;
     else { p = (z - d->sasz)%((n -= nm - 1)) + d->sasz; z = (z - d->sasz)/n; }
 
     /* tile non-floating, non-fullscreen master windows to equally share the master area */
     for (int i = 0; i < nm; i++) {
         int xx = (b ? (ww - clients) : (wh - clients)) / (nm - i);
-        if (b) resize(c, x + uselessgap + clients, y + uselessgap, xx - 2*(borderwidth + uselessgap),
-                ma - 2*(borderwidth + uselessgap), False);
-        else   resize(c, x + uselessgap, y + uselessgap + clients, ma - 2*(borderwidth + uselessgap),
-                xx - 2*(borderwidth + uselessgap), False);
-        clients += (b ? c->w : c->h) + 2*borderwidth + uselessgap;
+        if (b) resize(c, x + uselessgap + clients, y + uselessgap, xx - 2*(c->bw + uselessgap),
+                ma - 2*(c->bw + uselessgap), False);
+        else   resize(c, x + uselessgap, y + uselessgap + clients, ma - 2*(c->bw + uselessgap),
+                xx - 2*(c->bw + uselessgap), False);
+        clients += (b ? c->w : c->h) + 2*c->bw + uselessgap;
         for (c = c->next; c && ISFFT(c); c = c->next);
     }
 
     /* tile the next non-floating, non-fullscreen (and first) stack window adding p */
-    int ch = z - 2*borderwidth - uselessgap; int cw = (b ? h:w) - 2*borderwidth - ma - uselessgap;
+    int ch = z - 2*c->bw - uselessgap; int cw = (b ? h:w) - 2*c->bw - ma - uselessgap;
     if (b) resize(c, x += uselessgap, y += ma, ch - uselessgap + p, cw, False);
     else   resize(c, x += ma, y += uselessgap, cw, ch - uselessgap + p, False);
 
