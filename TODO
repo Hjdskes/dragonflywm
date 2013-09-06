@@ -1,5 +1,4 @@
 bugs:
-  *togglepanel doesn't work with master windows in tile
   *resize_master resizes client over uselessgap when pushed to min
   *uselessgap multiple clients vs one client -> panel
   *skype acts wrong with setclientstate in maprequest

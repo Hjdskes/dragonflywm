@@ -1435,7 +1435,7 @@ void stack(int x, int y, int w, int h, const Desktop *d) {
 
     /* tile non-floating, non-fullscreen master windows to equally share the master area */
     for (int i = 0; i < nm; i++) {
-        int xx = (b ? (ww - clients) : (wh - clients)) / (nm - i);
+        int xx = (b ? (w - clients) : (h - clients)) / (nm - i);
         if (b) resize(c, x + uselessgap + clients, y + uselessgap, xx - 2*(c->bw + uselessgap),
                 ma - 2*(c->bw + uselessgap), False);
         else   resize(c, x + uselessgap, y + uselessgap + clients, ma - 2*(c->bw + uselessgap),
