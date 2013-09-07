@@ -239,14 +239,15 @@ static int xerrorstart(Display *dis, XErrorEvent *ee);
  * currdeskidx  - which desktop is currently active
  */
 static Bool running = True;
-static int wh, ww, wx, wy, currdeskidx, prevdeskidx, retval;
+static int currdeskidx, prevdeskidx, retval;
 static unsigned int numlockmask, win_unfocus, win_focus, cur_norm, cur_move, cur_res;
 static const char wmname[12] = "DragonflyWM";
 static Display *dis;
 static Window root, supportwin;
 static Atom wmatoms[WM_COUNT], netatoms[NET_COUNT];
 static Desktop desktops[DESKTOPS];
-static unsigned long struts[LASTSTRUT];
+unsigned long struts[LASTSTRUT];
+int wh = 0, ww = 0, wx = 0, wy = 0;
 
 /**
  * array of event handlers
@@ -1295,8 +1296,8 @@ void setup(void) {
     root = RootWindow(dis, screen);
 
     /* screen width and height */
-    /*ww = XDisplayWidth(dis,  screen) - (panelhoriz ? 0 : panelheight);
-    wh = XDisplayHeight(dis, screen) - (panelhoriz ? panelheight : 0);*/
+    ww = XDisplayWidth(dis,  screen) - (panelhoriz ? 0 : panelheight);
+    wh = XDisplayHeight(dis, screen) - (panelhoriz ? panelheight : 0);
 
     struts[RIGHTSTRUT] = struts[LEFTSTRUT] = struts[TOPSTRUT] = struts[BOTSTRUT] = 0;
     updategeom();
@@ -1405,7 +1406,7 @@ void spawn(const Arg *arg) {
  */
 void stack(int x, int y, int w, int h, const Desktop *d) {
     Client *c = NULL, *t = NULL; Bool b = (d->mode == BSTACK);
-    int n = 0, clients = 0, p = 0, z = (b ? w:h), ma = (b ? h:w) * d->mfact + d->masz, nm = d->nm;
+    int n = 0, clients = 0, p = 0, z = (b ? w:h), ma = (b ? w:h) * d->mfact + d->masz, nm = d->nm;
 
     /* count stack windows and grab first non-floating, non-fullscreen window */
     for (t = d->head; t; t = t->next) if (!ISFFT(t)) { if (c) ++n; else c = t; }
@@ -1519,16 +1520,16 @@ void togglefloat(void) {
 /**
  * toggle visibility state of the panel/bar
  */
-void togglestruts(void) {
+/*void togglestruts(void) {*/
     /*desktops[currdeskidx].sbar = !desktops[currdeskidx].sbar;
     tile(&desktops[currdeskidx]);*/
 
-	desktops[currdeskidx].sbar = 
+	/*desktops[currdeskidx].sbar =*/
 	        /*(desktops[currdeskidx].sbar == StrutsOn) ? (options.hidebastards ? StrutsHide : StrutsOff) : StrutsOn;*/
-	        (desktops[currdeskidx].sbar == STRUTS_ON) ? STRUTS_ON : STRUTS_HIDE;
+	        /*(desktops[currdeskidx].sbar == STRUTS_ON) ? STRUTS_ON : STRUTS_HIDE;
     updategeom();
     tile(&desktops[currdeskidx]);
-}
+}*/
 
 /**
  * windows that request to unmap should lose their client
@@ -1578,17 +1579,17 @@ void updatecurrentdesktop(void) {
 
 
 void updategeom(void) {
-    switch (desktops[currdeskidx].sbar) {
-        default:
+    /*switch (desktops[currdeskidx].sbar) {
+        default:*/
             wx += struts[LEFTSTRUT];
             wy += struts[TOPSTRUT];
             ww -= (struts[RIGHTSTRUT] + struts[LEFTSTRUT]);
-            wh = MIN(wh - struts[TOPSTRUT], wh - (struts[BOTSTRUT] + struts[TOPSTRUT]));
-            break;
+            wh -= (struts[BOTSTRUT] + struts[TOPSTRUT]);
+            /*break;
         case STRUTS_HIDE:
         case STRUTS_OFF:
         break;
-    }
+    }*/
     /*updateatom[WorkArea] (NULL);*/
 }
 
