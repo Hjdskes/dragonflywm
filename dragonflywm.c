@@ -26,6 +26,8 @@
 
 enum { RESIZE, MOVE };
 enum { CLIENTWIN, ROOTWIN };
+enum { STRUTS_ON, STRUTS_OFF, STRUTS_HIDE };
+enum { LEFTSTRUT, RIGHTSTRUT, TOPSTRUT, BOTSTRUT, LASTSTRUT };
 enum { TILE, MONOCLE, BSTACK, GRID, FLOAT, MODES };
 enum { WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_COUNT };
 enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
@@ -37,7 +39,7 @@ enum { NET_ACTIVE_WINDOW, NET_CLOSE_WINDOW, NET_SUPPORTED,
        NET_WM_WINDOW_TYPE_DOCK, NET_WM_WINDOW_TYPE_DESKTOP,
        NET_WM_WINDOW_TYPE_SPLASH, NET_WM_WINDOW_TYPE_MENU,
        NET_WM_WINDOW_TYPE_DIALOG, NET_WM_WINDOW_TYPE_UTILITY,
-       UTF8_STRING, NET_COUNT };
+       NET_WM_STRUT, NET_WM_STRUT_PARTIAL, UTF8_STRING, NET_COUNT };
 
 /**
  * argument structure to be passed to function by config.h
@@ -125,7 +127,7 @@ static void spawn(const Arg *arg);
 static void swap_master();
 static void switch_mode(const Arg *arg);
 static void togglefloat();
-static void togglepanel();
+static void togglestruts();
 
 #include "config.h"
 
@@ -147,7 +149,7 @@ static void togglepanel();
  */
 typedef struct Client {
     struct Client *next;
-    Bool isurgn, isfull, isfloat, istrans, isfixed, isdock;
+    Bool isurgn, isfull, isfloat, istrans, isfixed, isdock, hasstruts;
     Window win;
     float mina, maxa;
     int x, y, w, h, bw;
@@ -190,6 +192,8 @@ static void enternotify(XEvent *e);
 static void focus(Client *c, Desktop *d);
 static void focusin(XEvent *e);
 static unsigned long getcolor(const char* color, const int screen);
+static int getstrut(Client *c, Atom strut);
+static int getstruts(Client *c);
 static void grabbuttons(Client *c);
 static void grabkeys(void);
 static void grid(int x, int y, int w, int h, const Desktop *d);
@@ -214,7 +218,9 @@ static void unmapnotify(XEvent *e);
 static void updateclientdesktop(Client *c, int desktop);
 static void updateclientlist(void);
 static void updatecurrentdesktop(void);
+static void updategeom(void);
 static void updatesizehints(Client *c);
+static void updatestruts(void);
 static Bool wintoclient(Window w, Client **c, Desktop **d);
 static int xerror(Display *dis, XErrorEvent *ee);
 static int xerrorstart(Display *dis, XErrorEvent *ee);
@@ -233,13 +239,14 @@ static int xerrorstart(Display *dis, XErrorEvent *ee);
  * currdeskidx  - which desktop is currently active
  */
 static Bool running = True;
-static int wh, ww, currdeskidx, prevdeskidx, retval;
+static int wh, ww, wx, wy, currdeskidx, prevdeskidx, retval;
 static unsigned int numlockmask, win_unfocus, win_focus, cur_norm, cur_move, cur_res;
 static const char wmname[12] = "DragonflyWM";
 static Display *dis;
 static Window root, supportwin;
 static Atom wmatoms[WM_COUNT], netatoms[NET_COUNT];
 static Desktop desktops[DESKTOPS];
+static unsigned long struts[LASTSTRUT];
 
 /**
  * array of event handlers
@@ -713,6 +720,26 @@ unsigned long getcolor(const char* color, const int screen) {
     return c.pixel;
 }
 
+int getstrut(Client *c, Atom strut) {
+    unsigned long *state = NULL;
+    int ret = 0, format;
+    unsigned long i, n, extra;
+    Atom real;
+
+    if (!XGetWindowProperty(dis, c->win, strut, 0L, 64L, False, AnyPropertyType, &real, &format, &n, &extra, (unsigned char **)&ret)) return ret;
+    if (n) {
+        for (i = LEFTSTRUT; i < LASTSTRUT; i++)
+        struts[i] = MAX(state[i], struts[i]);
+        ret = 1;
+    }
+    XFree(state);
+    return ret;
+}
+
+int getstruts(Client *c) {
+    return (getstrut(c, netatoms[NET_WM_STRUT_PARTIAL]) || getstrut(c, netatoms[NET_WM_STRUT]));
+}
+
 /**
  * register button bindings to be notified of
  * when they occur.
@@ -850,6 +877,7 @@ void maprequest(XEvent *e) {
     c->w = c->oldw = wa.width;
     c->h = c->oldh = wa.height;
     c->bw = borderwidth;
+    c->hasstruts = getstruts(c);
     wc.border_width = c->bw;
     XConfigureWindow(dis, c->win, CWBorderWidth, &wc);
     configure(c);
@@ -874,6 +902,7 @@ void maprequest(XEvent *e) {
     }
     if (state) XFree(state);
 
+    if(c->hasstruts) updategeom();
     addwindow(c, (d = &desktops[newdsk]), aside);
     updatesizehints(c);
     /*setclientstate(c, NormalState);*/
@@ -1089,6 +1118,10 @@ void propertynotify(XEvent *e) {
         XWMHints *wmh = XGetWMHints(dis, c->win);
         c->isurgn = (c != desktops[currdeskidx].curr && (wmh && (wmh->flags & XUrgencyHint)));
         if (wmh) XFree(wmh);
+    } else if (e->xproperty.atom == netatoms[NET_WM_STRUT_PARTIAL]) {
+        c->hasstruts = getstruts(c);
+        updategeom();
+        tile(d);
     } else if (e->xproperty.atom == XA_WM_NORMAL_HINTS) updatesizehints(c);
 }
 
@@ -1113,6 +1146,7 @@ void removeclient(Client *c, Desktop *d) {
     if (!*p) return; else *p = c->next;
     if (c == d->prev && !(d->prev = prevclient(d->curr, d))) d->prev = d->head;
     if (c == d->curr || (d->head && !d->head->next)) focus(d->prev, d);
+    if (c->hasstruts) { updatestruts(); updategeom(); }
     if (!(c->isfloat || c->istrans) || (d->head && !d->head->next)) tile(d);
     /*setclientstate(c, WithdrawnState);*/
     free(c);
@@ -1261,8 +1295,11 @@ void setup(void) {
     root = RootWindow(dis, screen);
 
     /* screen width and height */
-    ww = XDisplayWidth(dis,  screen) - (panelhoriz ? 0 : panelheight);
-    wh = XDisplayHeight(dis, screen) - (panelhoriz ? panelheight : 0);
+    /*ww = XDisplayWidth(dis,  screen) - (panelhoriz ? 0 : panelheight);
+    wh = XDisplayHeight(dis, screen) - (panelhoriz ? panelheight : 0);*/
+
+    struts[RIGHTSTRUT] = struts[LEFTSTRUT] = struts[TOPSTRUT] = struts[BOTSTRUT] = 0;
+    updategeom();
 
     /* init cursors */
     cur_norm = XCreateFontCursor(dis, XC_left_ptr);
@@ -1312,6 +1349,8 @@ void setup(void) {
     netatoms[NET_WM_WINDOW_TYPE_MENU]        = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_MENU",        False);
     netatoms[NET_WM_WINDOW_TYPE_DIALOG]      = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DIALOG",      False);
     netatoms[NET_WM_WINDOW_TYPE_UTILITY]     = XInternAtom(dis, "_NET_WM_WINDOW_TYPE_UTILITY",     False);
+    netatoms[NET_WM_STRUT]                   = XInternAtom(dis, "_NET_WM_STRUT",                   False);
+    netatoms[NET_WM_STRUT_PARTIAL]           = XInternAtom(dis, "_NET_WM_STRUT_PARTIAL",           False);
     netatoms[UTF8_STRING]                    = XInternAtom(dis, "UTF8_STRING",                     False);
 
     XChangeProperty(dis, root, netatoms[NET_SUPPORTED], XA_ATOM, 32,
@@ -1461,8 +1500,9 @@ void switch_mode(const Arg *arg) {
  */
 void tile(Desktop *d) {
     if (!d->head || d->mode == FLOAT) return; /* nothing to arange */
-    layout[d->head->next ? d->mode:MONOCLE](0, toppanel && d->sbar ? panelheight:0,
-            ww, wh + (d->sbar ? 0:panelheight), d);
+    /*layout[d->head->next ? d->mode:MONOCLE](0, toppanel && d->sbar ? panelheight:0,
+            ww, wh + (d->sbar ? 0:panelheight), d);*/
+    layout[d->head->next ? d->mode:MONOCLE](wx, wy, ww, wh, d);
 }
 
 /**
@@ -1479,8 +1519,14 @@ void togglefloat(void) {
 /**
  * toggle visibility state of the panel/bar
  */
-void togglepanel(void) {
-    desktops[currdeskidx].sbar = !desktops[currdeskidx].sbar;
+void togglestruts(void) {
+    /*desktops[currdeskidx].sbar = !desktops[currdeskidx].sbar;
+    tile(&desktops[currdeskidx]);*/
+
+	desktops[currdeskidx].sbar = 
+	        /*(desktops[currdeskidx].sbar == StrutsOn) ? (options.hidebastards ? StrutsHide : StrutsOff) : StrutsOn;*/
+	        (desktops[currdeskidx].sbar == STRUTS_ON) ? STRUTS_ON : STRUTS_HIDE;
+    updategeom();
     tile(&desktops[currdeskidx]);
 }
 
@@ -1530,6 +1576,22 @@ void updatecurrentdesktop(void) {
 			PropModeReplace, (unsigned char *)&(currdeskidx), DESKTOPS);
 }
 
+
+void updategeom(void) {
+    switch (desktops[currdeskidx].sbar) {
+        default:
+            wx += struts[LEFTSTRUT];
+            wy += struts[TOPSTRUT];
+            ww -= (struts[RIGHTSTRUT] + struts[LEFTSTRUT]);
+            wh = MIN(wh - struts[TOPSTRUT], wh - (struts[BOTSTRUT] + struts[TOPSTRUT]));
+            break;
+        case STRUTS_HIDE:
+        case STRUTS_OFF:
+        break;
+    }
+    /*updateatom[WorkArea] (NULL);*/
+}
+
 void updatesizehints(Client *c) {
     long msize;
     XSizeHints size;
@@ -1565,6 +1627,15 @@ void updatesizehints(Client *c) {
     } else c->maxa = c->mina = 0.0;
     c->isfixed = (c->maxw && c->minw && c->maxh && c->minh
             && c->maxw == c->minw && c->maxh == c->minh);
+}
+
+void updatestruts(void) {
+    Client *c = NULL; Desktop *d = NULL;
+    struts[RIGHTSTRUT] = struts[LEFTSTRUT] = struts[TOPSTRUT] = struts[BOTSTRUT] = 0;
+    for (unsigned int i = 0; i < DESKTOPS; i++)
+    for (d = &desktops[i], c = d->head; c; c = c->next)
+        if (c->hasstruts)
+            getstruts(c);
 }
 
 /**
