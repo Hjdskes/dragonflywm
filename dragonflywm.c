@@ -139,6 +139,7 @@ static void togglepanel();
  * isfloat - set when the window is floating
  * istrans - set when the window is transient
  * isfixed - set when the window has a fixed size
+ * isdock  - set when the window is dock or panel
  * win     - the window this client is representing
  *
  * istrans is separate from isfloat as floating windows can be reset to
@@ -146,7 +147,7 @@ static void togglepanel();
  */
 typedef struct Client {
     struct Client *next;
-    Bool isurgn, isfull, isfloat, istrans, isfixed;
+    Bool isurgn, isfull, isfloat, istrans, isfixed, isdock;
     Window win;
     float mina, maxa;
     int x, y, w, h, bw;
@@ -176,7 +177,7 @@ typedef struct {
 } Desktop;
 
 /* hidden function prototypes sorted alphabetically */
-static Client* addwindow(Window w, Desktop *d, Bool attachaside);
+static void addwindow(Client *c, Desktop *d, Bool attachaside);
 static Bool applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact);
 static void buttonpress(XEvent *e);
 static void cleanup(void);
@@ -278,15 +279,13 @@ static void (*layout[MODES])(int x, int y, int w, int h, const Desktop *d) = {
  * add the window as the last client
  * otherwise add the window as head
  */
-Client* addwindow(Window w, Desktop *d, Bool attachaside) {
-    Client *c = NULL, *t = prevclient(d->head, d);
-    if (!(c = (Client *)calloc(1, sizeof(Client)))) err(EXIT_FAILURE, "%s: cannot allocate client", wmname);
+void addwindow(Client *c, Desktop *d, Bool attachaside) {
+    Client *t = prevclient(d->head, d);
     if (!d->head) d->head = c;
     else if (!attachaside) { c->next = d->head; d->head = c; }
     else if (t) t->next = c; else d->head->next = c;
 
-    XSelectInput(dis, (c->win = w), PropertyChangeMask|FocusChangeMask|(follow_mouse?EnterWindowMask:0));
-    return c;
+    XSelectInput(dis, c->win, PropertyChangeMask|FocusChangeMask|(follow_mouse?EnterWindowMask:0));
 }
 
 Bool applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
@@ -455,20 +454,16 @@ void client_to_desktop(const Arg *arg) {
  */
 void clientmessage(XEvent *e) {
     Desktop *d = NULL; Client *c = NULL;
+    if (!wintoclient(e->xclient.window, &c, &d)) return;
+
     if (e->xclient.message_type == netatoms[NET_WM_STATE]) {
         if ((unsigned)e->xclient.data.l[1] == netatoms[NET_WM_STATE_FULLSCREEN] || (unsigned)e->xclient.data.l[2] == netatoms[NET_WM_STATE_FULLSCREEN]) {
-            if ((wintoclient(e->xclient.window, &c, &d))) {
-                setfullscreen(c, d, (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isfull)));
-                if (!(c->isfloat || c->istrans) || !d->head->next) tile(d);
-            }
-        } else if ((unsigned)e->xclient.data.l[1] == netatoms[NET_WM_STATE_DEMANDS_ATTENTION] || (unsigned)e->xclient.data.l[2] == netatoms[NET_WM_STATE_DEMANDS_ATTENTION]) {
-            if ((wintoclient(e->xclient.window, &c, &d)))
+            setfullscreen(c, d, (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isfull)));
+            if (!(c->isfloat || c->istrans) || !d->head->next) tile(d);
+        } else if ((unsigned)e->xclient.data.l[1] == netatoms[NET_WM_STATE_DEMANDS_ATTENTION] || (unsigned)e->xclient.data.l[2] == netatoms[NET_WM_STATE_DEMANDS_ATTENTION])
                 c->isurgn = (c != desktops[currdeskidx].curr && (e->xclient.data.l[0] == 1 || (e->xclient.data.l[0] == 2 && !c->isurgn)));
-        }
-    } else if (e->xclient.message_type == netatoms[NET_ACTIVE_WINDOW]) {
-        if (wintoclient(e->xclient.window, &c, &d))
-            focus(c, d);
-    } else if (e->xclient.message_type == netatoms[NET_CLOSE_WINDOW]) deletewindow(e->xclient.window);
+    } else if (e->xclient.message_type == netatoms[NET_ACTIVE_WINDOW]) focus(c, d);
+    else if (e->xclient.message_type == netatoms[NET_CLOSE_WINDOW]) deletewindow(e->xclient.window);
     else if (e->xclient.message_type == netatoms[NET_CURRENT_DESKTOP])
         change_desktop(&(Arg){.i = e->xclient.data.l[0]});
 }
@@ -497,23 +492,6 @@ void configure(Client *c) {
  * and sometimes border width and stacking order (above, detail).
  * a configure request attempts to reconfigure those properties for a window.
  *
- * we don't really care about those values, because a tiling wm will impose
- * its own values for those properties.
- * however the requested values must be set initially for some windows,
- * otherwise the window will misbehave or even crash (see gedit, geany, gvim).
- *
- * some windows depend on the number of columns and rows to set their
- * size, and not on pixels (terminals, consoles, some editors etc).
- * normally those clients when tiled and respecting the prefered size
- * will create gaps around them (window_hints).
- * however, clients are tiled to match the wm's prefered size,
- * not respecting those prefered values.
- *
- * some windows implement window manager functions themselves.
- * that is windows explicitly steal focus, or manage subwindows,
- * or move windows around w/o the window manager's help, etc..
- * to disallow this behavior, we 'tile()' the desktop to which
- * the window that sent the configure request belongs.
  */
 void configurerequest(XEvent *e) {
     Client *c = NULL; Desktop *d = NULL;
@@ -661,8 +639,9 @@ void focus(Client *c, Desktop *d) {
         XDeleteProperty(dis, root, netatoms[NET_ACTIVE_WINDOW]);
         d->curr = d->prev = NULL;
         return;
-    } else if (d->prev == c && d->curr != c->next) { d->prev = prevclient((d->curr = c), d);
-    } else if (d->curr != c) { d->prev = d->curr; d->curr = c; }
+    } else if (c->isdock) return;
+    else if (d->prev == c && d->curr != c->next) { d->prev = prevclient((d->curr = c), d); }
+    else if (d->curr != c) { d->prev = d->curr; d->curr = c; }
     if (c->isurgn) c->isurgn = False;
 
     /* restack clients
@@ -683,15 +662,7 @@ void focus(Client *c, Desktop *d) {
     Window w[n];
     w[(d->curr->isfloat || d->curr->istrans) ? 0:ft] = d->curr->win;
     for (fl += !ISFFT(d->curr) ? 1:0, c = d->head; c; c = c->next) {
-        XSetWindowBorder(dis, c->win, c == d->curr ? win_focus:win_unfocus);
-        /*
-         * a window should have borders in any case, except if
-         *  - the window is fullscreen
-         *  - the window is not floating or transient and
-         *      - the mode is MONOCLE or,
-         *      - it is the only window on screen
-         */
-        /*XSetWindowBorderWidth(dis, c->win, (!ISFFT(c) && (d->mode == MONOCLE || !d->head->next)) ? 0:c->bw);*/
+        if (!c->isdock) XSetWindowBorder(dis, c->win, c == d->curr ? win_focus:win_unfocus);
         if (c != d->curr) w[c->isfull ? --fl:ISFFT(c) ? --ft:--n] = c->win;
         if (c == d->curr) grabbuttons(c);
     }
@@ -858,15 +829,10 @@ void maprequest(XEvent *e) {
 
     if (wintoclient(w, &c, &d) || (XGetWindowAttributes(dis, w, &wa) && wa.override_redirect)) return;
 
-    if (XGetWindowProperty(dis, w, netatoms[NET_WM_WINDOW_TYPE], 0L, sizeof a,
-            False, XA_ATOM, &a, &i, &l, &l, &type) == Success && type)
-        if (*(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DOCK] || *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DESKTOP]) {
-            XMapWindow(dis, w);
-	        if (type) XFree(type);
-            return;
-        }
+    if (!(c = (Client *)calloc(1, sizeof(Client)))) err(EXIT_FAILURE, "%s: cannot allocate client", wmname);
+    c->win = w;
 
-    if ((XGetTextProperty(dis, w, &name, netatoms[NET_WM_NAME]) || XGetTextProperty(dis, w, &name, XA_WM_NAME)) && XGetClassHint(dis, w, &ch)) {
+    if ((XGetTextProperty(dis, c->win, &name, netatoms[NET_WM_NAME]) || XGetTextProperty(dis, c->win, &name, XA_WM_NAME)) && XGetClassHint(dis, c->win, &ch)) {
         for (unsigned int i = 0; i < LENGTH(rules); i++)
             if ((!rules[i].title || strstr((char *)name.value, rules[i].title))
                     && (!rules[i].class || strstr(ch.res_class, rules[i].class))
@@ -879,26 +845,24 @@ void maprequest(XEvent *e) {
     if (ch.res_name) XFree(ch.res_name);
     if (name.value) XFree(name.value);
 
-    c = addwindow(w, (d = &desktops[newdsk]), aside); /* from now on, use c->win */
     c->x = c->oldx = wa.x;
     c->y = c->oldy = wa.y;
     c->w = c->oldw = wa.width;
     c->h = c->oldh = wa.height;
     c->bw = borderwidth;
     wc.border_width = c->bw;
-    XConfigureWindow(dis, w, CWBorderWidth, &wc);
+    XConfigureWindow(dis, c->win, CWBorderWidth, &wc);
     configure(c);
-    updatesizehints(c);
-    /*setclientstate(c, NormalState);*/
-    c->istrans = XGetTransientForHint(dis, c->win, &w);
-    if ((c->isfloat = (c->isfixed || floating || d->mode == FLOAT)) && !c->istrans)
-        XMoveWindow(dis, c->win, (ww - wa.width)/2, (wh - wa.height)/2);
 
+    /* *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DESKTOP] */
     if (XGetWindowProperty(dis, c->win, netatoms[NET_WM_WINDOW_TYPE], 0L, sizeof a,
-            False, XA_ATOM, &a, &i, &l, &l, &type) == Success && type)
-        if (*(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DIALOG] || *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_SPLASH]
+            False, XA_ATOM, &a, &i, &l, &l, &type) == Success && type) {
+        if (*(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DOCK])
+            c->isfloat = c->isdock = True;
+        else if (*(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_DIALOG] || *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_SPLASH]
                 || *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_UTILITY] || *(Atom *)type == netatoms[NET_WM_WINDOW_TYPE_MENU])
             c->isfloat = True;
+    }
     if (type) XFree(type);
 
     if (XGetWindowProperty(dis, c->win, netatoms[NET_WM_STATE], 0L, sizeof a,
@@ -909,6 +873,14 @@ void maprequest(XEvent *e) {
             c->isfloat = True;
     }
     if (state) XFree(state);
+
+    addwindow(c, (d = &desktops[newdsk]), aside);
+    updatesizehints(c);
+    /*setclientstate(c, NormalState);*/
+    c->istrans = XGetTransientForHint(dis, c->win, &w);
+    if ((c->isfloat = (c->isfixed || floating || d->mode == FLOAT)) && !c->istrans && !c->isdock)
+        /*XMoveWindow(dis, c->win, (ww - c->w)/2, (wh - c->h)/2);*/
+        XRaiseWindow(dis, c->win);
 
     if (currdeskidx == newdsk) { if (!ISFFT(c)) tile(d); XMapWindow(dis, c->win); }
     else if (follow) change_desktop(&(Arg){.i = newdsk});

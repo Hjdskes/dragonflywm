@@ -1,4 +1,5 @@
 bugs:
+  *dont focus c->isdock crashes wm
   *resize_master resizes client over uselessgap when pushed to min
   *skype acts wrong with setclientstate in maprequest
   *when closing last running application, client list does not get updated. only with tint2?
@@ -16,7 +17,7 @@ check / cleanup:
   *properly implement DESKTOPS
   *rework stack² layout with c->x?
   *fix int vs unsigned int
-  *do we need ev->value_mask & CWBorderWidth in combination with wc.border_width = c->bw and XConfigureWindow(dis, w, CWBorderWidth, &wc);
+  *if (!c->isdock) XSetWindowBorder(dis, c->win, c == d->curr ? win_focus:win_unfocus);
 
 next release:
   *combine both desktop arrays?
